@@ -24,8 +24,8 @@ function ShopContent() {
   useEffect(() => {
     Promise.all([getProducts(100), getCategories()])
       .then(([prods, cats]) => {
-        setProducts(prods);
-        setCategories(cats);
+        setProducts(Array.isArray(prods) ? prods : []);
+        setCategories(Array.isArray(cats) ? cats : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -50,7 +50,6 @@ function ShopContent() {
     <main className="bg-black text-white min-h-screen pt-24 pb-20 px-6 md:px-16">
       <div className="max-w-[1400px] mx-auto">
 
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-end border-b border-[#1a1a1c] pb-12 mb-12 gap-8">
           <button onClick={() => setIsModalOpen(true)} className="group text-left">
             <span className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold block mb-2">Browse By</span>
@@ -67,7 +66,6 @@ function ShopContent() {
           />
         </div>
 
-        {/* CATEGORY MODAL */}
         <AnimatePresence>
           {isModalOpen && (
             <motion.div
@@ -96,7 +94,6 @@ function ShopContent() {
           )}
         </AnimatePresence>
 
-        {/* SORT */}
         <div className="flex justify-between items-center mb-16">
           <select
             className="bg-black text-white border border-white px-6 py-2 text-[10px] uppercase font-black tracking-widest outline-none cursor-pointer hover:bg-white hover:text-black transition-all"
@@ -111,7 +108,6 @@ function ShopContent() {
           </span>
         </div>
 
-        {/* LOADING */}
         {loading && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
@@ -124,7 +120,6 @@ function ShopContent() {
           </div>
         )}
 
-        {/* PRODUCTS */}
         {!loading && (
           <motion.div layout className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
             <AnimatePresence mode="popLayout">
