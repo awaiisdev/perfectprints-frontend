@@ -20,9 +20,11 @@ export default function CheckoutPage() {
 
   const handleOrder = () => {
     if (!isFormValid) return;
-    const itemsList = items.map(i =>
-      `• ${i.name} x${i.quantity} = PKR ${(parseFloat(i.price) * i.quantity).toLocaleString()}`
-    ).join("\n");
+    const itemsList = items.map(i => {
+      const attrs = Object.entries(i.attributes || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
+      const sku = (i as any).sku ? `SKU: ${(i as any).sku} | ` : "";
+      return `• ${i.name} | ${sku}${attrs} | x${i.quantity} = PKR ${(parseFloat(i.price) * i.quantity).toLocaleString()}`;
+    }).join("\n");
     const message =
       `🛍️ *New Order - PerfectPrints*\n\n` +
       `*Customer:* ${form.name}\n*Phone:* ${form.phone}\n*Address:* ${form.address}, ${form.city}\n\n` +
@@ -51,8 +53,6 @@ export default function CheckoutPage() {
   return (
     <main className="bg-black text-white min-h-screen py-16 px-4 sm:px-6 md:px-16">
       <div className="max-w-[1200px] mx-auto grid md:grid-cols-2 gap-10 md:gap-16">
-
-        {/* Form */}
         <div className="space-y-6 sm:space-y-8">
           <h2 className="text-2xl font-black uppercase tracking-widest border-b border-white/10 pb-4">Delivery Info</h2>
           <div className="space-y-4">
@@ -67,7 +67,6 @@ export default function CheckoutPage() {
                 className="w-full bg-transparent border border-white/20 p-4 text-sm outline-none focus:border-white text-white placeholder:text-neutral-600" />
             ))}
           </div>
-
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Payment Method</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -79,14 +78,12 @@ export default function CheckoutPage() {
               ))}
             </div>
           </div>
-
           <button onClick={handleOrder} disabled={!isFormValid}
             className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.2em] text-xs hover:bg-neutral-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
             Place Order via WhatsApp
           </button>
         </div>
 
-        {/* Order Summary */}
         <div className="bg-[#0a0a0a] border border-white/10 p-6 sm:p-8 h-fit md:sticky md:top-10 order-first md:order-last">
           <h2 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-white/10 pb-4">Order Summary</h2>
           {items.length === 0 ? (
@@ -100,6 +97,10 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex flex-col justify-center gap-1">
                     <h3 className="text-xs font-bold uppercase text-white leading-tight" dangerouslySetInnerHTML={{ __html: item.name }} />
+                    {(item as any).sku && <p className="text-[10px] text-neutral-600 uppercase">SKU: {(item as any).sku}</p>}
+                    {Object.entries(item.attributes || {}).map(([k, v]) => (
+                      <p key={k} className="text-[10px] text-neutral-500 uppercase">{k}: {v}</p>
+                    ))}
                     <p className="text-[10px] text-neutral-500">Qty: {item.quantity}</p>
                     <p className="text-xs font-bold text-white">PKR {(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
                   </div>

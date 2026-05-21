@@ -12,6 +12,7 @@ export default function ProductPage() {
   const { addItem } = useCart();
 
   const [product, setProduct] = useState<any>(null);
+  const [variations, setVariations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
   const [selectedImage, setSelectedImage] = useState(0);
@@ -30,15 +31,46 @@ export default function ProductPage() {
       });
       setSelectedAttributes(defaults);
       setLoading(false);
+
+      // Variations fetch
+      if (data.type === "variable") {
+        fetch(`/api/variations?id=${data.id}`)
+          .then(r => r.json())
+          .then(v => setVariations(Array.isArray(v) ? v : []));
+      }
     });
   }, [id]);
 
+  // Variation se matching image dhundo
+  const getVariationImage = (attrs: Record<string, string>) => {
+    if (!variations.length) return null;
+    const match = variations.find((v: any) =>
+      v.attributes?.every((a: any) =>
+        !attrs[a.name] || attrs[a.name] === a.option
+      )
+    );
+    return match?.image?.src || null;
+  };
+
+  const handleAttributeSelect = (attrName: string, option: string) => {
+    const newAttrs = { ...selectedAttributes, [attrName]: option };
+    setSelectedAttributes(newAttrs);
+    const varImg = getVariationImage(newAttrs);
+    if (varImg) {
+      const images = product.images || [];
+      const idx = images.findIndex((img: any) => img.src === varImg);
+      setSelectedImage(idx >= 0 ? idx : 0);
+    }
+  };
+
   const handleAddToBag = () => {
+    const varImg = getVariationImage(selectedAttributes);
     addItem({
       id: product.id,
       name: product.name,
+      sku: product.sku || "",
       price: product.sale_price || product.regular_price || product.price || "0",
-      image: product.images?.[0]?.src ?? "",
+      image: varImg || product.images?.[0]?.src || "",
       quantity: 1,
       attributes: selectedAttributes,
     });
@@ -73,8 +105,6 @@ export default function ProductPage() {
   return (
     <main className="bg-black text-white min-h-screen py-20 px-6 md:px-16 font-sans">
       <div className="max-w-[1400px] mx-auto">
-
-        {/* Back */}
         <button
           onClick={() => router.back()}
           className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white mb-12 flex items-center gap-2 transition-colors"
@@ -83,7 +113,6 @@ export default function ProductPage() {
         </button>
 
         <div className="grid md:grid-cols-2 gap-16">
-
           {/* LEFT — Images */}
           <div className="space-y-4">
             <div className="w-full aspect-[4/5] bg-[#0a0a0a] border border-[#1a1a1c] overflow-hidden">
@@ -116,24 +145,20 @@ export default function ProductPage() {
                   {product.categories[0].name}
                 </p>
               )}
-              <h1
-                className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white mb-4"
-                dangerouslySetInnerHTML={{ __html: product.name }}
-              />
+              <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white mb-4"
+                dangerouslySetInnerHTML={{ __html: product.name }} />
+              {product.sku && (
+                <p className="text-[10px] text-neutral-600 uppercase tracking-widest mb-2">SKU: {product.sku}</p>
+              )}
               <div className="flex items-center gap-4">
                 <p className="text-2xl font-bold">PKR {parseFloat(price || "0").toLocaleString()}</p>
                 {onSale && product.regular_price && (
-                  <p className="text-lg text-neutral-500 line-through">
-                    PKR {parseFloat(product.regular_price).toLocaleString()}
-                  </p>
+                  <p className="text-lg text-neutral-500 line-through">PKR {parseFloat(product.regular_price).toLocaleString()}</p>
                 )}
-                {onSale && (
-                  <span className="text-[10px] bg-white text-black px-2 py-1 font-black uppercase tracking-widest">SALE</span>
-                )}
+                {onSale && <span className="text-[10px] bg-white text-black px-2 py-1 font-black uppercase tracking-widest">SALE</span>}
               </div>
             </div>
 
-            {/* Variations */}
             {variationAttrs.map((attr: any) => (
               <div key={attr.id}>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4 text-neutral-400">
@@ -143,7 +168,7 @@ export default function ProductPage() {
                   {attr.options.map((option: string) => (
                     <button
                       key={option}
-                      onClick={() => setSelectedAttributes(prev => ({ ...prev, [attr.name]: option }))}
+                      onClick={() => handleAttributeSelect(attr.name, option)}
                       className={`px-4 h-11 border text-xs font-bold uppercase tracking-wider transition-all ${
                         selectedAttributes[attr.name] === option
                           ? "bg-white text-black border-white"
@@ -157,23 +182,17 @@ export default function ProductPage() {
               </div>
             ))}
 
-            {/* Buttons */}
             <div className="flex flex-col gap-3">
-              <button
-                onClick={handleAddToBag}
-                className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.2em] hover:bg-neutral-200 transition-all"
-              >
+              <button onClick={handleAddToBag}
+                className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.2em] hover:bg-neutral-200 transition-all">
                 {added ? "✓ Added to Bag!" : "Add to Bag"}
               </button>
-              <button
-                onClick={() => { handleAddToBag(); router.push("/checkout"); }}
-                className="w-full py-5 border border-white text-white font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all"
-              >
+              <button onClick={() => { handleAddToBag(); router.push("/checkout"); }}
+                className="w-full py-5 border border-white text-white font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all">
                 Buy Now
               </button>
             </div>
 
-            {/* Accordion */}
             <div className="border-t border-[#1a1a1c]">
               {[
                 { title: "Description", content: product.short_description || product.description },

@@ -2,40 +2,27 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavHeader from "@/components/NavHeader";
-import CinematicFooter from "@/components/CinematicFooter";
 import { CartProvider } from "@/lib/CartContext";
+import CinematicFooter from "@/components/CinematicFooter";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Perfect Prints",
-  description: "Premium Custom Printing Pakistan",
+  description: "Premium custom printing Pakistan",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col bg-black text-white`}>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <CartProvider>
-          {/* Header sabse upar */}
           <NavHeader />
-
-          {/* Main page content yahan aayega */}
           <main className="flex-grow">{children}</main>
-
-          {/* Footer sabse neeche */}
           <CinematicFooter />
         </CartProvider>
       </body>
