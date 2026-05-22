@@ -13,6 +13,7 @@ export default function ProductPage() {
 
   const [product, setProduct] = useState<any>(null);
   const [variations, setVariations] = useState<any[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
   const [selectedImage, setSelectedImage] = useState(0);
@@ -21,6 +22,7 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
     getProduct(id).then((data) => {
       setProduct(data);
       const defaults: Record<string, string> = {};
@@ -32,22 +34,24 @@ export default function ProductPage() {
       setSelectedAttributes(defaults);
       setLoading(false);
 
-      // Variations fetch
       if (data.type === "variable") {
         fetch(`/api/variations?id=${data.id}`)
           .then(r => r.json())
           .then(v => setVariations(Array.isArray(v) ? v : []));
       }
+
+      // Real Related Products Fetching
+      if (data.related_ids && data.related_ids.length > 0) {
+        Promise.all(data.related_ids.map((rid: number) => getProduct(rid.toString())))
+          .then(res => setRelatedProducts(res.filter(p => p)));
+      }
     });
   }, [id]);
 
-  // Variation se matching image dhundo
   const getVariationImage = (attrs: Record<string, string>) => {
     if (!variations.length) return null;
     const match = variations.find((v: any) =>
-      v.attributes?.every((a: any) =>
-        !attrs[a.name] || attrs[a.name] === a.option
-      )
+      v.attributes?.every((a: any) => !attrs[a.name] || attrs[a.name] === a.option)
     );
     return match?.image?.src || null;
   };
@@ -78,121 +82,43 @@ export default function ProductPage() {
     setTimeout(() => setAdded(false), 2000);
   };
 
-  if (loading) {
-    return (
-      <main className="bg-black text-white min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-xs tracking-widest uppercase text-neutral-500">Loading...</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!product) {
-    return (
-      <main className="bg-black text-white min-h-screen flex items-center justify-center">
-        <p className="text-neutral-500 uppercase tracking-widest text-xs">Product not found</p>
-      </main>
-    );
-  }
+  if (loading) return <main className="bg-black text-white min-h-screen flex items-center justify-center">Loading...</main>;
+  if (!product) return <main className="bg-black text-white min-h-screen flex items-center justify-center">Product not found</main>;
 
   const images = product.images?.length > 0 ? product.images : [{ src: null }];
   const price = product.sale_price || product.regular_price || product.price;
-  const onSale = product.on_sale;
   const variationAttrs = product.attributes?.filter((a: any) => a.variation) || [];
 
   return (
     <main className="bg-black text-white min-h-screen py-20 px-6 md:px-16 font-sans">
       <div className="max-w-[1400px] mx-auto">
-        <button
-          onClick={() => router.back()}
-          className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white mb-12 flex items-center gap-2 transition-colors"
-        >
-          ← Back
-        </button>
+        <button onClick={() => router.back()} className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white mb-12">← Back</button>
 
         <div className="grid md:grid-cols-2 gap-16">
-          {/* LEFT — Images */}
           <div className="space-y-4">
             <div className="w-full aspect-[4/5] bg-[#0a0a0a] border border-[#1a1a1c] overflow-hidden">
-              {images[selectedImage]?.src ? (
-                <img src={images[selectedImage].src} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-neutral-700 text-xs uppercase tracking-widest">No Image</div>
-              )}
+              <img src={images[selectedImage]?.src} alt={product.name} className="w-full h-full object-cover" />
             </div>
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.slice(0, 4).map((img: any, i: number) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={`aspect-[4/5] bg-[#0a0a0a] border overflow-hidden transition-all ${selectedImage === i ? "border-white" : "border-[#1a1a1c]"}`}
-                  >
-                    {img.src && <img src={img.src} alt="" className="w-full h-full object-cover" />}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* RIGHT — Details */}
           <div className="flex flex-col gap-8">
-            <div>
-              {product.categories?.length > 0 && (
-                <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 mb-3">
-                  {product.categories[0].name}
-                </p>
-              )}
-              <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white mb-4"
-                dangerouslySetInnerHTML={{ __html: product.name }} />
-              {product.sku && (
-                <p className="text-[10px] text-neutral-600 uppercase tracking-widest mb-2">SKU: {product.sku}</p>
-              )}
-              <div className="flex items-center gap-4">
-                <p className="text-2xl font-bold">PKR {parseFloat(price || "0").toLocaleString()}</p>
-                {onSale && product.regular_price && (
-                  <p className="text-lg text-neutral-500 line-through">PKR {parseFloat(product.regular_price).toLocaleString()}</p>
-                )}
-                {onSale && <span className="text-[10px] bg-white text-black px-2 py-1 font-black uppercase tracking-widest">SALE</span>}
-              </div>
-            </div>
-
+            <h1 className="text-3xl font-black uppercase" dangerouslySetInnerHTML={{ __html: product.name }} />
+            <p className="text-2xl font-bold">PKR {parseFloat(price || "0").toLocaleString()}</p>
             {variationAttrs.map((attr: any) => (
               <div key={attr.id}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4 text-neutral-400">
-                  {attr.name}: <span className="text-white">{selectedAttributes[attr.name]}</span>
-                </p>
+                <p className="text-[10px] font-bold uppercase text-neutral-400 mb-4">{attr.name}</p>
                 <div className="flex flex-wrap gap-2">
                   {attr.options.map((option: string) => (
-                    <button
-                      key={option}
-                      onClick={() => handleAttributeSelect(attr.name, option)}
-                      className={`px-4 h-11 border text-xs font-bold uppercase tracking-wider transition-all ${
-                        selectedAttributes[attr.name] === option
-                          ? "bg-white text-black border-white"
-                          : "border-[#1a1a1c] text-neutral-400 hover:border-white hover:text-white"
-                      }`}
-                    >
-                      {option}
-                    </button>
+                    <button key={option} onClick={() => handleAttributeSelect(attr.name, option)} className={`px-4 h-11 border text-xs font-bold uppercase ${selectedAttributes[attr.name] === option ? "bg-white text-black" : "border-[#1a1a1c]"}`}>{option}</button>
                   ))}
                 </div>
               </div>
             ))}
-
             <div className="flex flex-col gap-3">
-              <button onClick={handleAddToBag}
-                className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.2em] hover:bg-neutral-200 transition-all">
-                {added ? "✓ Added to Bag!" : "Add to Bag"}
-              </button>
-              <button onClick={() => { handleAddToBag(); router.push("/checkout"); }}
-                className="w-full py-5 border border-white text-white font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all">
-                Buy Now
-              </button>
+              <button onClick={handleAddToBag} className="w-full py-5 bg-white text-black font-black uppercase tracking-[0.2em]">{added ? "✓ Added to Bag!" : "Add to Bag"}</button>
+              <button onClick={() => { handleAddToBag(); router.push("/checkout"); }} className="w-full py-5 border border-white text-white font-black uppercase tracking-[0.2em]">Buy Now</button>
             </div>
-
+            
             <div className="border-t border-[#1a1a1c]">
               {[
                 { title: "Description", content: product.short_description || product.description },
@@ -200,22 +126,12 @@ export default function ProductPage() {
                 { title: "Shipping & Returns", content: "Delivery across Pakistan in 3-5 working days. Free shipping on orders over PKR 5,000." },
               ].map((section) => (
                 <div key={section.title} className="border-b border-[#1a1a1c]">
-                  <button
-                    className="w-full py-6 flex justify-between uppercase font-bold text-xs tracking-widest hover:text-neutral-400 transition-colors"
-                    onClick={() => setOpenSection(openSection === section.title ? null : section.title)}
-                  >
-                    {section.title}
-                    <span>{openSection === section.title ? "−" : "+"}</span>
+                  <button className="w-full py-6 flex justify-between uppercase font-bold text-xs tracking-widest" onClick={() => setOpenSection(openSection === section.title ? null : section.title)}>
+                    {section.title} <span>{openSection === section.title ? "−" : "+"}</span>
                   </button>
                   <AnimatePresence>
-                    {openSection === section.title && section.content && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden pb-6 text-neutral-400 text-sm leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: section.content }}
-                      />
+                    {openSection === section.title && (
+                      <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden pb-6 text-neutral-400 text-sm" dangerouslySetInnerHTML={{ __html: section.content }} />
                     )}
                   </AnimatePresence>
                 </div>
@@ -223,6 +139,25 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+
+        {/* Real Related Products Section */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-24 border-t border-[#1a1a1c] pt-12">
+            <h3 className="text-xl font-bold uppercase tracking-tighter text-white mb-10">You Might Also Like</h3>
+            <div className="flex overflow-hidden">
+              <motion.div className="flex gap-6" animate={{ x: ["0%", "-50%"] }} transition={{ repeat: Infinity, ease: "linear", duration: 30 }}>
+                {[...relatedProducts, ...relatedProducts].map((rel, i) => (
+                  <div key={i} className="min-w-[200px] cursor-pointer" onClick={() => router.push(`/product/${rel.id}`)}>
+                    <div className="h-64 bg-[#0a0a0a] border border-[#1a1a1c] mb-3">
+                      <img src={rel.images?.[0]?.src} className="w-full h-full object-cover" />
+                    </div>
+                    <p className="text-xs uppercase font-bold tracking-widest">{rel.name}</p>
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

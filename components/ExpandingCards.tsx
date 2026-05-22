@@ -1,88 +1,23 @@
 "use client";
 
 import * as React from "react";
-import {
-  Gift,
-  Shirt,
-  Briefcase,
-  Printer,
-  Layers,
-  Calendar,
-  Trophy,
-  Tag
-} from "lucide-react";
+import { Gift, Shirt, Briefcase, Printer, Layers, Calendar, Trophy, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_ITEMS = [
-  {
-    id: "personalized-gifts",
-    title: "Personalized Gifts",
-    description: "Custom gifts made memorable with photos, names, and personal messages.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451589/ChatGPT_Image_May_22_2026_05_01_05_AM_sfupjk.png",
-    icon: <Gift className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/occasion-gifts-pakistan/"
-  },
-  {
-    id: "custom-clothing",
-    title: "Custom T-Shirts & Clothing",
-    description: "Premium custom apparel printing for brands, fans, and everyday fashion.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451591/ChatGPT_Image_May_22_2026_04_54_45_AM_uwdszx.png",
-    icon: <Shirt className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/custom-tshirts-pakistan/"
-  },
-  {
-    id: "corporate-bulk",
-    title: "Corporate & Bulk Printing",
-    description: "Professional bulk printing solutions for companies, events, and promotions.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451594/ChatGPT_Image_May_22_2026_04_55_43_AM_r2pfpw.png",
-    icon: <Briefcase className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/corporate-gifts-pakistan/"
-  },
-  {
-    id: "dtf-printing",
-    title: "DTF Printing",
-    description: "High-quality DTF transfer printing for vibrant and durable designs.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451594/ChatGPT_Image_May_22_2026_04_57_25_AM_mmcvya.png",
-    icon: <Printer className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/dtf-printing-pakistan/"
-  },
-  {
-    id: "sublimation-raw",
-    title: "Sublimation Raw Material",
-    description: "Complete sublimation supplies for printing businesses across Pakistan.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451589/ChatGPT_Image_May_22_2026_04_59_38_AM_fltole.png",
-    icon: <Layers className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/sublimation-raw-material-pakistan/"
-  },
-  {
-    id: "occasion-gifts",
-    title: "Occasion Gifts",
-    description: "Unique personalized gifts for birthdays, Eid, anniversaries, and special moments.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451589/ChatGPT_Image_May_22_2026_05_01_05_AM_sfupjk.png",
-    icon: <Calendar className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/occasion-gifts-pakistan/"
-  },
-  {
-    id: "cricket-merch",
-    title: "Cricket Fan Merchandise",
-    description: "Custom cricket fan apparel and merchandise for passionate supporters.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451593/ChatGPT_Image_May_22_2026_05_02_16_AM_iu4jqx.png",
-    icon: <Trophy className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/cricket-merchandise-pakistan/"
-  },
-  {
-    id: "promotional-branded",
-    title: "Promotional & Branded Items",
-    description: "Branded promotional products designed to grow your business identity.",
-    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451586/ChatGPT_Image_May_22_2026_05_03_26_AM_kpli5p.png",
-    icon: <Tag className="h-5 w-5" />,
-    url: "https://perfectprints.pk/product-category/promotional-items-pakistan/"
-  }
+  { id: "personalized-gifts", title: "Personalized Gifts", description: "Custom gifts made memorable with photos, names, and personal messages.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451589/ChatGPT_Image_May_22_2026_05_01_05_AM_sfupjk.png", icon: <Gift className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/occasion-gifts-pakistan/" },
+  { id: "custom-clothing", title: "Custom T-Shirts & Clothing", description: "Premium custom apparel printing for brands, fans, and everyday fashion.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451591/ChatGPT_Image_May_22_2026_04_54_45_AM_uwdszx.png", icon: <Shirt className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/custom-tshirts-pakistan/" },
+  { id: "corporate-bulk", title: "Corporate & Bulk Printing", description: "Professional bulk printing solutions for companies, events, and promotions.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451594/ChatGPT_Image_May_22_2026_04_55_43_AM_r2pfpw.png", icon: <Briefcase className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/corporate-gifts-pakistan/" },
+  { id: "dtf-printing", title: "DTF Printing", description: "High-quality DTF transfer printing for vibrant and durable designs.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451594/ChatGPT_Image_May_22_2026_04_57_25_AM_mmcvya.png", icon: <Printer className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/dtf-printing-pakistan/" },
+  { id: "sublimation-raw", title: "Sublimation Raw Material", description: "Complete sublimation supplies for printing businesses across Pakistan.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451589/ChatGPT_Image_May_22_2026_04_59_38_AM_fltole.png", icon: <Layers className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/sublimation-raw-material-pakistan/" },
+  { id: "occasion-gifts", title: "Occasion Gifts", description: "Unique personalized gifts for birthdays, Eid, anniversaries, and special moments.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451589/ChatGPT_Image_May_22_2026_05_01_05_AM_sfupjk.png", icon: <Calendar className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/occasion-gifts-pakistan/" },
+  { id: "cricket-merch", title: "Cricket Fan Merchandise", description: "Custom cricket fan apparel and merchandise for passionate supporters.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451593/ChatGPT_Image_May_22_2026_05_02_16_AM_iu4jqx.png", icon: <Trophy className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/cricket-merchandise-pakistan/" },
+  { id: "promotional-branded", title: "Promotional & Branded Items", description: "Branded promotional products designed to grow your business identity.", imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/q_auto,f_auto/v1779451586/ChatGPT_Image_May_22_2026_05_03_26_AM_kpli5p.png", icon: <Tag className="h-5 w-5" />, url: "https://perfectprints.pk/product-category/promotional-items-pakistan/" }
 ];
 
 export default function ExpandingCards({ className, defaultActiveIndex = 0, ...props }: any) {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(defaultActiveIndex);
-  const [isDesktop, setIsDesktop] = React.useState(false);
+  const [isDesktop, setIsDesktop] = React.useState(true);
 
   React.useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -97,14 +32,6 @@ export default function ExpandingCards({ className, defaultActiveIndex = 0, ...p
       ? { gridTemplateColumns: CATEGORY_ITEMS.map((_, i) => (i === activeIndex ? "5fr" : "1fr")).join(" ") }
       : { gridTemplateRows: CATEGORY_ITEMS.map((_, i) => (i === activeIndex ? "4fr" : "1fr")).join(" ") };
   }, [activeIndex, isDesktop]);
-
-  const handleClick = (index: number, url: string) => {
-    if (activeIndex === index) {
-      window.open(url, "_blank");
-    } else {
-      setActiveIndex(index);
-    }
-  };
 
   return (
     <section className="w-full bg-black py-20 px-4 border-t border-[#1a1a1c]">
@@ -124,12 +51,12 @@ export default function ExpandingCards({ className, defaultActiveIndex = 0, ...p
               key={item.id}
               className={cn("group relative cursor-pointer overflow-hidden rounded-none border border-[#1a1a1c] bg-[#09090b] text-white shadow-sm min-h-0 min-w-0 transition-all duration-300")}
               onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => handleClick(index, item.url)}
               data-active={activeIndex === index}
             >
               <img
                 src={item.imgSrc}
                 alt={item.title}
+                loading="lazy"
                 className="absolute inset-0 h-full w-full object-cover transition-all duration-500 scale-105 grayscale opacity-50 group-data-[active=true]:opacity-80 group-data-[active=true]:grayscale-0"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/10" />
@@ -146,6 +73,12 @@ export default function ExpandingCards({ className, defaultActiveIndex = 0, ...p
                 <p className="w-full max-w-sm text-xs text-[#88888f] font-light tracking-wide opacity-0 group-data-[active=true]:opacity-100 transition-opacity duration-300 delay-225">
                   {item.description}
                 </p>
+                <a
+                  href={item.url}
+                  className="mt-4 px-6 py-3 bg-white text-black text-[10px] font-black uppercase tracking-widest opacity-0 group-data-[active=true]:opacity-100 transition-opacity duration-300 delay-300 w-fit hover:bg-neutral-300"
+                >
+                  Shop Now
+                </a>
               </article>
             </li>
           ))}
