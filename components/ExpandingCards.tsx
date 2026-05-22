@@ -11,17 +11,73 @@ import {
   Trophy,
   Tag
 } from "lucide-react";
-import { cn } from "@/lib/utils"; 
+import { cn } from "@/lib/utils";
 
 const CATEGORY_ITEMS = [
-  { id: "personalized-gifts", title: "Personalized Gifts", description: "Custom gifts made memorable with photos, names, and personal messages.", imgSrc: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&q=80", icon: <Gift className="h-5 w-5" /> },
-  { id: "custom-clothing", title: "Custom T-Shirts & Clothing", description: "Premium custom apparel printing for brands, fans, and everyday fashion.", imgSrc: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800&q=80", icon: <Shirt className="h-5 w-5" /> },
-  { id: "corporate-bulk", title: "Corporate & Bulk Printing", description: "Professional bulk printing solutions for companies, events, and promotions.", imgSrc: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&q=80", icon: <Briefcase className="h-5 w-5" /> },
-  { id: "dtf-printing", title: "DTF Printing", description: "High-quality DTF transfer printing for vibrant and durable designs.", imgSrc: "https://images.unsplash.com/photo-1571945153237-4929e78394a9?w=800&q=80", icon: <Printer className="h-5 w-5" /> },
-  { id: "sublimation-raw", title: "Sublimation Raw Material", description: "Complete sublimation supplies for printing businesses across Pakistan.", imgSrc: "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?w=800&q=80", icon: <Layers className="h-5 w-5" /> },
-  { id: "occasion-gifts", title: "Occasion Gifts", description: "Unique personalized gifts for birthdays, Eid, anniversaries, and special moments.", imgSrc: "https://images.unsplash.com/photo-1513201099495-a6697de526a2?w=800&q=80", icon: <Calendar className="h-5 w-5" /> },
-  { id: "cricket-merch", title: "Cricket Fan Merchandise", description: "Custom cricket fan apparel and merchandise for passionate supporters.", imgSrc: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&q=80", icon: <Trophy className="h-5 w-5" /> },
-  { id: "promotional-branded", title: "Promotional & Branded Items", description: "Branded promotional products designed to grow your business identity.", imgSrc: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&q=80", icon: <Tag className="h-5 w-5" /> }
+  {
+    id: "personalized-gifts",
+    title: "Personalized Gifts",
+    description: "Custom gifts made memorable with photos, names, and personal messages.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451589/ChatGPT_Image_May_22_2026_05_01_05_AM_sfupjk.png",
+    icon: <Gift className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/occasion-gifts-pakistan/"
+  },
+  {
+    id: "custom-clothing",
+    title: "Custom T-Shirts & Clothing",
+    description: "Premium custom apparel printing for brands, fans, and everyday fashion.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451591/ChatGPT_Image_May_22_2026_04_54_45_AM_uwdszx.png",
+    icon: <Shirt className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/custom-tshirts-pakistan/"
+  },
+  {
+    id: "corporate-bulk",
+    title: "Corporate & Bulk Printing",
+    description: "Professional bulk printing solutions for companies, events, and promotions.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451594/ChatGPT_Image_May_22_2026_04_55_43_AM_r2pfpw.png",
+    icon: <Briefcase className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/corporate-gifts-pakistan/"
+  },
+  {
+    id: "dtf-printing",
+    title: "DTF Printing",
+    description: "High-quality DTF transfer printing for vibrant and durable designs.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451594/ChatGPT_Image_May_22_2026_04_57_25_AM_mmcvya.png",
+    icon: <Printer className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/dtf-printing-pakistan/"
+  },
+  {
+    id: "sublimation-raw",
+    title: "Sublimation Raw Material",
+    description: "Complete sublimation supplies for printing businesses across Pakistan.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451589/ChatGPT_Image_May_22_2026_04_59_38_AM_fltole.png",
+    icon: <Layers className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/sublimation-raw-material-pakistan/"
+  },
+  {
+    id: "occasion-gifts",
+    title: "Occasion Gifts",
+    description: "Unique personalized gifts for birthdays, Eid, anniversaries, and special moments.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451589/ChatGPT_Image_May_22_2026_05_01_05_AM_sfupjk.png",
+    icon: <Calendar className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/occasion-gifts-pakistan/"
+  },
+  {
+    id: "cricket-merch",
+    title: "Cricket Fan Merchandise",
+    description: "Custom cricket fan apparel and merchandise for passionate supporters.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451593/ChatGPT_Image_May_22_2026_05_02_16_AM_iu4jqx.png",
+    icon: <Trophy className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/cricket-merchandise-pakistan/"
+  },
+  {
+    id: "promotional-branded",
+    title: "Promotional & Branded Items",
+    description: "Branded promotional products designed to grow your business identity.",
+    imgSrc: "https://res.cloudinary.com/db8fp3as7/image/upload/v1779451586/ChatGPT_Image_May_22_2026_05_03_26_AM_kpli5p.png",
+    icon: <Tag className="h-5 w-5" />,
+    url: "https://perfectprints.pk/product-category/promotional-items-pakistan/"
+  }
 ];
 
 export default function ExpandingCards({ className, defaultActiveIndex = 0, ...props }: any) {
@@ -37,10 +93,18 @@ export default function ExpandingCards({ className, defaultActiveIndex = 0, ...p
 
   const gridStyle = React.useMemo(() => {
     if (activeIndex === null) return {};
-    return isDesktop 
+    return isDesktop
       ? { gridTemplateColumns: CATEGORY_ITEMS.map((_, i) => (i === activeIndex ? "5fr" : "1fr")).join(" ") }
       : { gridTemplateRows: CATEGORY_ITEMS.map((_, i) => (i === activeIndex ? "4fr" : "1fr")).join(" ") };
   }, [activeIndex, isDesktop]);
+
+  const handleClick = (index: number, url: string) => {
+    if (activeIndex === index) {
+      window.open(url, "_blank");
+    } else {
+      setActiveIndex(index);
+    }
+  };
 
   return (
     <section className="w-full bg-black py-20 px-4 border-t border-[#1a1a1c]">
@@ -60,13 +124,17 @@ export default function ExpandingCards({ className, defaultActiveIndex = 0, ...p
               key={item.id}
               className={cn("group relative cursor-pointer overflow-hidden rounded-none border border-[#1a1a1c] bg-[#09090b] text-white shadow-sm min-h-0 min-w-0 transition-all duration-300")}
               onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => setActiveIndex(index)}
+              onClick={() => handleClick(index, item.url)}
               data-active={activeIndex === index}
             >
-              <img src={item.imgSrc} alt={item.title} className="absolute inset-0 h-full w-full object-cover transition-all duration-500 scale-105 grayscale opacity-35 group-data-[active=true]:opacity-60 group-data-[active=true]:grayscale-0" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              <img
+                src={item.imgSrc}
+                alt={item.title}
+                className="absolute inset-0 h-full w-full object-cover transition-all duration-500 scale-105 grayscale opacity-50 group-data-[active=true]:opacity-80 group-data-[active=true]:grayscale-0"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/10" />
               <article className="absolute inset-0 flex flex-col justify-end gap-2 p-5">
-                <h3 className="hidden md:block absolute top-8 left-1/2 -translate-x-1/2 rotate-90 text-[11px] font-black uppercase tracking-[0.3em] text-[#66666f] group-data-[active=true]:hidden transition-all">
+                <h3 className="hidden md:block absolute top-8 left-1/2 -translate-x-1/2 rotate-90 text-[11px] font-black uppercase tracking-[0.3em] text-[#aaaaaf] group-data-[active=true]:hidden transition-all">
                   {item.title}
                 </h3>
                 <div className="opacity-0 group-data-[active=true]:opacity-100 transition-opacity duration-300 delay-75">
