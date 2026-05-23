@@ -411,15 +411,15 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* ── RELATED PRODUCTS MARQUEE ── */}
+        {/* ── RELATED PRODUCTS GRID ── */}
         {relatedProducts.length > 0 && (
-          <div className="border-t border-black/10 dark:border-white/10 pt-16 pb-8">
-            <div className="flex items-end justify-between mb-10">
+          <div className="border-t border-black/10 dark:border-white/10 pt-12 pb-8">
+            <div className="flex items-end justify-between mb-8">
               <div>
-                <span className="text-[10px] tracking-[0.4em] text-neutral-400 font-black uppercase block mb-2" style={{ fontFamily: "var(--font-inter)" }}>
+                <span className="text-[10px] tracking-[0.4em] text-neutral-400 font-black uppercase block mb-1" style={{ fontFamily: "var(--font-inter)" }}>
                   RELATED PRODUCTS
                 </span>
-                <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>
+                <h3 className="text-xl md:text-2xl font-black uppercase tracking-tighter text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>
                   You Might Also Like
                 </h3>
               </div>
@@ -428,39 +428,33 @@ export default function ProductPage() {
               </Link>
             </div>
 
-            {/* Marquee */}
-            <div className="overflow-hidden">
-              <motion.div
-                className="flex gap-4"
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ repeat: Infinity, ease: "linear", duration: 25 }}
-              >
-                {[...relatedProducts, ...relatedProducts].map((rel, i) => (
-                  <div
-                    key={i}
-                    className="min-w-[160px] md:min-w-[180px] cursor-pointer group flex-shrink-0"
-                    onClick={() => router.push(`/product/${rel.id}`)}
-                  >
-                    <div className="w-full aspect-square bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-2 overflow-hidden">
-                      {rel.images?.[0]?.src ? (
-                        <img
-                          src={rel.images[0].src}
-                          alt={rel.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-700 text-xs uppercase tracking-widest">No Image</div>
-                      )}
-                    </div>
-                    <p className="text-[11px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }}
-                      dangerouslySetInnerHTML={{ __html: rel.name }}
-                    />
-                    <p className="text-[11px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>
-                      PKR {parseFloat(rel.price || "0").toLocaleString()}
-                    </p>
+            {/* 5-column grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {relatedProducts.slice(0, 5).map((rel, i) => (
+                <div
+                  key={i}
+                  className="cursor-pointer group"
+                  onClick={() => router.push(`/product/${rel.id}`)}
+                >
+                  <div className="w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-2 overflow-hidden">
+                    {rel.images?.[0]?.src ? (
+                      <img
+                        src={rel.images[0].src}
+                        alt={rel.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-700 text-xs uppercase tracking-widest">No Image</div>
+                    )}
                   </div>
-                ))}
-              </motion.div>
+                  <p className="text-[11px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }}
+                    dangerouslySetInnerHTML={{ __html: rel.name }}
+                  />
+                  <p className="text-[11px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>
+                    PKR {parseFloat(rel.price || "0").toLocaleString()}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         )}
