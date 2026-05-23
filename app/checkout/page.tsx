@@ -226,7 +226,7 @@ export default function CheckoutPage() {
                     </p>
                   </div>
                   <button
-                    onClick={() => removeItem(item.id, item.attributes)}
+                    onClick={() => removeItem(item.id)}
                     className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors flex-shrink-0 mt-1"
                   >
                     <X className="w-4 h-4" />
