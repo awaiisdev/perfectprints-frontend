@@ -181,7 +181,7 @@ export default function ProductPage() {
           {/* ── LEFT: IMAGE GALLERY ── */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative w-full aspect-[4/5] bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 overflow-hidden group">
+            <div className="relative w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 overflow-hidden group">
               <AnimatePresence mode="wait">
                 <motion.img
                   key={selectedImage}
@@ -191,7 +191,7 @@ export default function ProductPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </AnimatePresence>
 
@@ -437,15 +437,15 @@ export default function ProductPage() {
                 {[...relatedProducts, ...relatedProducts].map((rel, i) => (
                   <div
                     key={i}
-                    className="min-w-[200px] md:min-w-[240px] cursor-pointer group flex-shrink-0"
+                    className="min-w-[260px] md:min-w-[280px] cursor-pointer group flex-shrink-0"
                     onClick={() => router.push(`/product/${rel.id}`)}
                   >
-                    <div className="h-64 md:h-72 bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-3 overflow-hidden">
+                    <div className="aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-3 overflow-hidden">
                       {rel.images?.[0]?.src ? (
                         <img
                           src={rel.images[0].src}
                           alt={rel.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-700 text-xs uppercase tracking-widest">No Image</div>
