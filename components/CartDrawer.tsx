@@ -108,7 +108,7 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                         {/* Qty Controls */}
                         <div className="flex items-center border border-black/10 dark:border-white/10">
                           <button
-                            onClick={() => updateQty(item.id, item.quantity - 1, item.attributes)}
+                            onClick={() => updateQty(item.id, item.quantity - 1)}
                             className="px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10 text-black dark:text-white transition-colors"
                           >
                             <Minus className="w-3 h-3" />
@@ -120,7 +120,7 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQty(item.id, item.quantity + 1, item.attributes)}
+                            onClick={() => updateQty(item.id, item.quantity + 1)}
                             className="px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10 text-black dark:text-white transition-colors"
                           >
                             <Plus className="w-3 h-3" />
