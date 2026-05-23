@@ -6,6 +6,7 @@ import { getProduct, getProducts } from "@/lib/woocommerce";
 import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Share2, Heart } from "lucide-react";
+import CinematicFooter from "@/components/CinematicFooter";
 
 declare global {
   interface Window { fbq?: (...args: any[]) => void; }
@@ -437,24 +438,24 @@ export default function ProductPage() {
                 {[...relatedProducts, ...relatedProducts].map((rel, i) => (
                   <div
                     key={i}
-                    className="min-w-[260px] md:min-w-[280px] cursor-pointer group flex-shrink-0"
+                    className="min-w-[160px] md:min-w-[180px] cursor-pointer group flex-shrink-0"
                     onClick={() => router.push(`/product/${rel.id}`)}
                   >
-                    <div className="aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-3 overflow-hidden">
+                    <div className="w-full aspect-square bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-2 overflow-hidden">
                       {rel.images?.[0]?.src ? (
                         <img
                           src={rel.images[0].src}
                           alt={rel.name}
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-700 text-xs uppercase tracking-widest">No Image</div>
                       )}
                     </div>
-                    <p className="text-xs font-black uppercase tracking-tight text-black dark:text-white line-clamp-1" style={{ fontFamily: "var(--font-montserrat)" }}
+                    <p className="text-[11px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }}
                       dangerouslySetInnerHTML={{ __html: rel.name }}
                     />
-                    <p className="text-xs text-neutral-400 mt-1" style={{ fontFamily: "var(--font-inter)" }}>
+                    <p className="text-[11px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>
                       PKR {parseFloat(rel.price || "0").toLocaleString()}
                     </p>
                   </div>
@@ -465,6 +466,7 @@ export default function ProductPage() {
         )}
 
       </div>
+      <CinematicFooter />
     </main>
   );
 }
