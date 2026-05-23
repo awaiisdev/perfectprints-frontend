@@ -87,7 +87,7 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                           dangerouslySetInnerHTML={{ __html: item.name }}
                         />
                         <button
-                          onClick={() => removeItem(item.id, item.attributes)}
+                          onClick={() => removeItem(item.id)}
                           className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
