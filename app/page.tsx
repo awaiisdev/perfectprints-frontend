@@ -12,7 +12,7 @@ import CinematicFooter from "@/components/CinematicFooter";
 
 export default function HomePage() {
   return (
-    <main className="bg-black text-white min-h-screen">
+    <main className="bg-white dark:bg-black text-black dark:text-white min-h-screen transition-colors duration-300">
       <NavHeader />
       <AiHeroBackground />
       <OfferMarquee />

@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       payment_method: paymentMethod === "Cash on Delivery" ? "cod" : "bacs",
       payment_method_title: paymentMethod,
       set_paid: false,
-      status: "pending",
+      status: "processing", // ← FIXED: pending → processing
       billing: {
         first_name: firstName,
         last_name: lastName,
@@ -48,9 +48,12 @@ export async function POST(req: Request) {
       shipping_lines: [
         {
           method_id: "flat_rate",
-          method_title: "Flat Rate",
+          method_title: "Standard Delivery",
           total: String(shipping),
         },
+      ],
+      meta_data: [
+        { key: "_order_source", value: "PerfectPrints Next.js Frontend" },
       ],
       customer_note: `Phone: ${phone} | Payment: ${paymentMethod}`,
     };
@@ -66,8 +69,7 @@ export async function POST(req: Request) {
     const data = await res.json();
 
     if (!res.ok) {
-      console.error("WooCommerce error:", data);
-      return NextResponse.json({ error: "Order create nahi hua", details: data }, { status: 500 });
+      return NextResponse.json({ error: "Order could not be created", details: data }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -76,8 +78,8 @@ export async function POST(req: Request) {
       orderNumber: data.number,
       orderKey: data.order_key,
     });
+
   } catch (err) {
-    console.error("Orders route error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
