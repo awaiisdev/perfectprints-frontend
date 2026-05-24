@@ -1,18 +1,58 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useCart } from "@/lib/CartContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
-export default function CheckoutPage() {
+function CheckoutInner() {
   const { items, total, clearCart, removeItem } = useCart();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const shipping = 200;
   const grandTotal = total + shipping;
   const [form, setForm] = useState({ name: "", address: "", city: "", phone: "" });
   const [paymentMethod, setPaymentMethod] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [source, setSource] = useState("Direct");
+
+  useEffect(() => {
+    // URL params se source capture karo
+    const utm = searchParams.get("utm_source");
+    const fbclid = searchParams.get("fbclid");
+    const ref = document.referrer;
+
+    if (fbclid || utm === "fb" || utm === "facebook") {
+      setSource("Source: Fb");
+    } else if (utm === "ig" || utm === "instagram") {
+      setSource("Source: Ig");
+    } else if (utm) {
+      setSource(`Source: ${utm}`);
+    } else if (ref.includes("facebook")) {
+      setSource("Source: Fb");
+    } else if (ref.includes("instagram")) {
+      setSource("Source: Ig");
+    } else if (ref.includes("google")) {
+      setSource("Source: Google");
+    } else if (ref.includes("tiktok")) {
+      setSource("Source: TikTok");
+    } else if (ref.includes("pinterest")) {
+      setSource("Source: Pinterest");
+    } else if (ref.includes("whatsapp")) {
+      setSource("Source: WhatsApp");
+    }
+
+    // LocalStorage se bhi check karo agar pehle aaya tha
+    const saved = localStorage.getItem("pp_source");
+    if (saved) setSource(saved);
+
+    // Save karo
+    if (fbclid || utm) {
+      const s = fbclid ? "Source: Fb" : `Source: ${utm}`;
+      localStorage.setItem("pp_source", s);
+      setSource(s);
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -38,6 +78,7 @@ export default function CheckoutPage() {
           items,
           shipping,
           total: grandTotal,
+          source,
         }),
       });
 
@@ -57,21 +98,18 @@ export default function CheckoutPage() {
       const ownerMessage =
         `🛍️ *New Order #${data.orderNumber} — PerfectPrints*\n\n` +
         `*Customer:* ${form.name}\n*Phone:* ${form.phone}\n*Address:* ${form.address}, ${form.city}\n\n` +
-        `*Items:*\n${itemsList}\n\n*Shipping:* PKR ${shipping}\n*Total:* PKR ${grandTotal.toLocaleString()}\n\n*Payment:* ${paymentMethod}`;
+        `*Items:*\n${itemsList}\n\n*Shipping:* PKR ${shipping}\n*Total:* PKR ${grandTotal.toLocaleString()}\n\n*Payment:* ${paymentMethod}\n*Source:* ${source}`;
 
       const customerPhone = form.phone.replace(/^0/, "92").replace(/\s+/g, "");
       const customerMessage =
-        `✅ *Order Confirmed — PerfectPrints*\n\n` +
-        `Hi ${form.name}! 🎉\n\n` +
+        `✅ *Order Confirmed — PerfectPrints*\n\nHi ${form.name}! 🎉\n\n` +
         `Your order *#${data.orderNumber}* has been successfully placed.\n\n` +
         `*Items:*\n${itemsList}\n\n` +
         `*Delivery Address:* ${form.address}, ${form.city}\n` +
         `*Shipping:* PKR ${shipping}\n` +
         `*Total:* PKR ${grandTotal.toLocaleString()}\n` +
         `*Payment:* ${paymentMethod}\n\n` +
-        `Estimated delivery: 3–5 working days.\n` +
-        `For any queries, just reply to this message.\n\n` +
-        `— *PerfectPrints Team* 🙏`;
+        `Estimated delivery: 3–5 working days.\nFor any queries, just reply to this message.\n\n— *PerfectPrints Team* 🙏`;
 
       const orderData = encodeURIComponent(JSON.stringify({
         orderNumber: data.orderNumber,
@@ -89,6 +127,7 @@ export default function CheckoutPage() {
         date: new Date().toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" }),
       }));
 
+      localStorage.removeItem("pp_source");
       clearCart();
       router.push(`/thank-you?order=${orderData}`);
 
@@ -112,13 +151,9 @@ export default function CheckoutPage() {
 
         {/* LEFT — FORM */}
         <div className="space-y-8">
-          <h2
-            className="text-2xl font-black uppercase tracking-widest border-b border-black/10 dark:border-white/10 pb-4"
-            style={{ fontFamily: "var(--font-montserrat)" }}
-          >
+          <h2 className="text-2xl font-black uppercase tracking-widest border-b border-black/10 dark:border-white/10 pb-4" style={{ fontFamily: "var(--font-montserrat)" }}>
             Delivery Information
           </h2>
-
           <div className="space-y-4">
             {[
               { name: "name", placeholder: "Full Name" },
@@ -138,12 +173,8 @@ export default function CheckoutPage() {
             ))}
           </div>
 
-          {/* Payment Method */}
           <div className="space-y-4">
-            <h3
-              className="text-xs font-semibold uppercase tracking-widest text-neutral-400"
-              style={{ fontFamily: "var(--font-inter)" }}
-            >
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>
               Payment Method
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -193,13 +224,9 @@ export default function CheckoutPage() {
 
         {/* RIGHT — ORDER SUMMARY */}
         <div className="bg-neutral-50 dark:bg-[#050507] border border-black/10 dark:border-white/10 p-6 sm:p-8 h-fit md:sticky md:top-10 order-first md:order-last">
-          <h2
-            className="text-sm font-black uppercase tracking-widest mb-6 border-b border-black/10 dark:border-white/10 pb-4"
-            style={{ fontFamily: "var(--font-montserrat)" }}
-          >
+          <h2 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-black/10 dark:border-white/10 pb-4" style={{ fontFamily: "var(--font-montserrat)" }}>
             Order Summary
           </h2>
-
           {items.length === 0 ? (
             <p className="text-neutral-400 text-xs uppercase tracking-widest text-center py-8" style={{ fontFamily: "var(--font-inter)" }}>
               Your cart is empty
@@ -212,11 +239,7 @@ export default function CheckoutPage() {
                     {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
                   </div>
                   <div className="flex flex-col justify-center gap-1 flex-grow">
-                    <h3
-                      className="text-xs font-black uppercase text-black dark:text-white leading-tight"
-                      style={{ fontFamily: "var(--font-montserrat)" }}
-                      dangerouslySetInnerHTML={{ __html: item.name }}
-                    />
+                    <h3 className="text-xs font-black uppercase text-black dark:text-white leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: item.name }} />
                     {Object.entries(item.attributes || {}).map(([k, v]) => (
                       <p key={k} className="text-[10px] text-neutral-400 uppercase" style={{ fontFamily: "var(--font-inter)" }}>{k}: {v}</p>
                     ))}
@@ -225,34 +248,34 @@ export default function CheckoutPage() {
                       PKR {(parseFloat(item.price) * item.quantity).toLocaleString()}
                     </p>
                   </div>
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors flex-shrink-0 mt-1"
-                  >
+                  <button onClick={() => removeItem(item.id)} className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors flex-shrink-0 mt-1">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
             </div>
           )}
-
           <div className="space-y-3 border-t border-black/10 dark:border-white/10 pt-6 text-xs uppercase font-semibold" style={{ fontFamily: "var(--font-inter)" }}>
             <div className="flex justify-between text-neutral-400">
-              <span>Subtotal</span>
-              <span>PKR {total.toLocaleString()}</span>
+              <span>Subtotal</span><span>PKR {total.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-neutral-400">
-              <span>Shipping</span>
-              <span>PKR {shipping}</span>
+              <span>Shipping</span><span>PKR {shipping}</span>
             </div>
             <div className="flex justify-between items-center text-black dark:text-white text-base pt-2 border-t border-black/10 dark:border-white/10 font-black" style={{ fontFamily: "var(--font-montserrat)" }}>
-              <span>Total</span>
-              <span>PKR {grandTotal.toLocaleString()}</span>
+              <span>Total</span><span>PKR {grandTotal.toLocaleString()}</span>
             </div>
           </div>
         </div>
-
       </div>
     </main>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white dark:bg-black" />}>
+      <CheckoutInner />
+    </Suspense>
   );
 }

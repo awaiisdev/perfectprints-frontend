@@ -7,7 +7,7 @@ const SECRET = process.env.WC_CONSUMER_SECRET;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, phone, address, city, paymentMethod, items, shipping } = body;
+    const { name, phone, address, city, paymentMethod, items, shipping, source } = body;
 
     const firstName = name.split(" ")[0] || name;
     const lastName = name.split(" ").slice(1).join(" ") || ".";
@@ -53,9 +53,10 @@ export async function POST(req: Request) {
         },
       ],
       meta_data: [
-        { key: "_order_source", value: "PerfectPrints Next.js Frontend" },
+        { key: "_order_source", value: source || "Direct" },
+        { key: "_wawp_source", value: source || "Direct" },
       ],
-      customer_note: `Phone: ${phone} | Payment: ${paymentMethod}`,
+      customer_note: `Phone: ${phone} | Payment: ${paymentMethod} | ${source || "Direct"}`,
     };
 
     const url = `${BASE}/wp-json/wc/v3/orders?consumer_key=${KEY}&consumer_secret=${SECRET}`;

@@ -28,7 +28,7 @@ export default function ProductPage() {
   const [added, setAdded]                   = useState(false);
   const [wished, setWished]                 = useState(false);
   const [currentPrice, setCurrentPrice]     = useState<string>("");
-  const marqueeRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (!id) return;
@@ -211,7 +211,7 @@ export default function ProductPage() {
             {product.categories?.[0] && (
               <span className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 font-black" style={{ fontFamily: "var(--font-inter)" }}>{product.categories[0].name}</span>
             )}
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: product.name }} />
+            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: (product.name || "").replace(/darkgreen-sardine-406947\.hostingersite\.com/g, "www.perfectprints.pk") }} />
             <div>
               <p className="text-[10px] uppercase tracking-widest text-neutral-400 mb-1" style={{ fontFamily: "var(--font-inter)" }}>Price</p>
               <div className="flex items-baseline gap-3">
@@ -267,8 +267,8 @@ export default function ProductPage() {
             </div>
             <div className="border-t border-black/10 dark:border-white/10 mt-2">
               {[
-                { title: "Description", content: product.short_description || product.description },
-                { title: "Product Details", content: product.description },
+                { title: "Description", content: (product.short_description || product.description || "").replace(/darkgreen-sardine-406947\.hostingersite\.com/g, "www.perfectprints.pk") },
+                { title: "Product Details", content: (product.description || "").replace(/darkgreen-sardine-406947\.hostingersite\.com/g, "www.perfectprints.pk") },
                 { title: "Shipping & Returns", content: "<p>Standard delivery across Pakistan in 3–5 working days. Free shipping on orders above PKR 3,000. Cash on Delivery available. Returns accepted within 7 days of delivery if item is defective or incorrect.</p>" },
               ].map((sec) => (
                 <div key={sec.title} className="border-b border-black/10 dark:border-white/10">
@@ -299,39 +299,59 @@ export default function ProductPage() {
               <Link href="/shop" className="text-[10px] uppercase tracking-widest text-neutral-400 hover:text-black dark:hover:text-white transition-colors font-black" style={{ fontFamily: "var(--font-inter)" }}>View All →</Link>
             </div>
 
-            {/* Marquee: 5 cards visible, scrolling right to left */}
+            {/* Desktop: single marquee | Mobile: 2 rows opposite direction */}
             <style>{`
-              @keyframes marquee {
-                0%   { transform: translateX(0); }
-                100% { transform: translateX(-50%); }
-              }
-              .marquee-inner {
-                display: flex;
-                width: max-content;
-                animation: marquee 25s linear infinite;
-              }
-              .marquee-inner:hover { animation-play-state: paused; }
+              @keyframes marquee-ltr { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+              @keyframes marquee-rtl { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+              .marquee-ltr { display:flex; width:max-content; animation: marquee-ltr 25s linear infinite; }
+              .marquee-rtl { display:flex; width:max-content; animation: marquee-rtl 25s linear infinite; }
+              .marquee-ltr:hover, .marquee-rtl:hover { animation-play-state: paused; }
             `}</style>
-            <div className="overflow-hidden w-full" ref={marqueeRef}>
-              <div className="marquee-inner">
+
+            {/* DESKTOP — single row marquee */}
+            <div className="hidden md:block overflow-hidden w-full">
+              <div className="marquee-ltr">
                 {[...relatedProducts, ...relatedProducts].map((rel, i) => (
-                  <div
-                    key={i}
-                    className="cursor-pointer group flex-shrink-0 pr-3"
-                    style={{ width: "calc((100vw - 8rem) / 5)" }}
-                    onClick={() => router.push(`/product/${rel.id}`)}
-                  >
+                  <div key={i} className="cursor-pointer group flex-shrink-0 pr-3" style={{ width: "calc((100vw - 8rem) / 5)" }} onClick={() => router.push(`/product/${rel.id}`)}>
                     <div className="w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-2 overflow-hidden">
-                      {rel.images?.[0]?.src ? (
-                        <img src={rel.images[0].src} alt={rel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-700 text-xs uppercase tracking-widest">No Image</div>
-                      )}
+                      {rel.images?.[0]?.src ? <img src={rel.images[0].src} alt={rel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs uppercase">No Image</div>}
                     </div>
                     <p className="text-[11px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: rel.name }} />
                     <p className="text-[11px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>PKR {parseFloat(rel.price || "0").toLocaleString()}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* MOBILE — 2 rows, opposite directions */}
+            <div className="md:hidden space-y-3">
+              {/* Row 1 — left to right */}
+              <div className="overflow-hidden w-full">
+                <div className="marquee-ltr">
+                  {[...relatedProducts.slice(0, Math.ceil(relatedProducts.length / 2)), ...relatedProducts.slice(0, Math.ceil(relatedProducts.length / 2))].map((rel, i) => (
+                    <div key={i} className="cursor-pointer group flex-shrink-0 pr-2" style={{ width: "calc((100vw - 2rem) / 2.5)" }} onClick={() => router.push(`/product/${rel.id}`)}>
+                      <div className="w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-1.5 overflow-hidden">
+                        {rel.images?.[0]?.src ? <img src={rel.images[0].src} alt={rel.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs">No Image</div>}
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: rel.name }} />
+                      <p className="text-[10px] text-neutral-400 mt-0.5">PKR {parseFloat(rel.price || "0").toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Row 2 — right to left */}
+              <div className="overflow-hidden w-full">
+                <div className="marquee-rtl">
+                  {[...relatedProducts.slice(Math.ceil(relatedProducts.length / 2)), ...relatedProducts.slice(Math.ceil(relatedProducts.length / 2))].map((rel, i) => (
+                    <div key={i} className="cursor-pointer group flex-shrink-0 pr-2" style={{ width: "calc((100vw - 2rem) / 2.5)" }} onClick={() => router.push(`/product/${rel.id}`)}>
+                      <div className="w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-1.5 overflow-hidden">
+                        {rel.images?.[0]?.src ? <img src={rel.images[0].src} alt={rel.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs">No Image</div>}
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: rel.name }} />
+                      <p className="text-[10px] text-neutral-400 mt-0.5">PKR {parseFloat(rel.price || "0").toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
