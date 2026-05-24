@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const BASE = "https://perfectprints.pk";
+const BASE = "https://darkgreen-sardine-406947.hostingersite.com";
 const KEY = process.env.WC_CONSUMER_KEY;
 const SECRET = process.env.WC_CONSUMER_SECRET;
 
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       payment_method: paymentMethod === "Cash on Delivery" ? "cod" : "bacs",
       payment_method_title: paymentMethod,
       set_paid: false,
-      status: "processing", // ← FIXED: pending → processing
+      status: "processing",
       billing: {
         first_name: firstName,
         last_name: lastName,

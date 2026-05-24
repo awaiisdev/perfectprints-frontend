@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 
-const BASE = "https://perfectprints.pk";
+const BASE = "https://darkgreen-sardine-406947.hostingersite.com";
 const KEY = process.env.WC_CONSUMER_KEY;
 const SECRET = process.env.WC_CONSUMER_SECRET;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const ids = searchParams.get("ids"); // comma-separated IDs
+  const ids = searchParams.get("ids");
 
   if (!ids) {
     return NextResponse.json([]);
