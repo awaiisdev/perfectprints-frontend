@@ -222,6 +222,25 @@ export default function ProductPage() {
               <span className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 font-black" style={{ fontFamily: "var(--font-inter)" }}>{product.categories[0].name}</span>
             )}
             <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-tight break-words w-full" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: (product.name || "").replace(/[\|–—-]\s*(www\.)?perfectprints\.pk\s*/gi, "").replace(/[\|–—-]\s*(darkgreen-sardine-406947\.hostingersite\.com)\s*/gi, "").trim() }} />
+
+            {/* Star Rating — click karo reviews pe scroll ho */}
+            {reviews.length > 0 && (
+              <button
+                onClick={() => document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" })}
+                className="flex items-center gap-2 group"
+              >
+                <div className="flex">
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} className={`w-4 h-4 ${s <= Math.round(reviews.reduce((a,r) => a + r.rating, 0) / reviews.length) ? "fill-yellow-400 text-yellow-400" : "text-neutral-300"}`} />
+                  ))}
+                </div>
+                <span className="text-sm font-black text-black dark:text-white">{(reviews.reduce((a,r) => a + r.rating, 0) / reviews.length).toFixed(1)}</span>
+                <span className="text-xs text-neutral-400 group-hover:text-black dark:group-hover:text-white transition-colors underline underline-offset-2" style={{ fontFamily: "var(--font-inter)" }}>
+                  ({reviews.length} {reviews.length === 1 ? "review" : "reviews"})
+                </span>
+              </button>
+            )}
+
             <div>
               <p className="text-[10px] uppercase tracking-widest text-neutral-400 mb-1" style={{ fontFamily: "var(--font-inter)" }}>Price</p>
               <div className="flex items-baseline gap-3">
@@ -370,7 +389,7 @@ export default function ProductPage() {
       </div>
       {/* ── REVIEWS SECTION ── */}
       {product && (
-        <div className="max-w-7xl mx-auto px-4 md:px-16 py-16 border-t border-black/10 dark:border-white/10">
+        <div id="reviews-section" className="max-w-7xl mx-auto px-4 md:px-16 py-16 border-t border-black/10 dark:border-white/10">
 
           {/* Header */}
           <div className="flex items-end justify-between mb-10">
