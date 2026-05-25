@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { getProduct, getProducts } from "@/lib/woocommerce";
 import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Share2, Heart } from "lucide-react";
+import { ChevronLeft, ChevronRight, Share2, Heart, Star, Upload, X, CheckCircle } from "lucide-react";
 import CinematicFooter from "@/components/CinematicFooter";
 
 declare global {
@@ -21,6 +21,11 @@ export default function ProductPage() {
   const [product, setProduct]               = useState<any>(null);
   const [variations, setVariations]         = useState<any[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, text: "", images: [] as string[] });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviewImages, setReviewImages] = useState<string[]>([]);
   const [loading, setLoading]               = useState(true);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
   const [selectedImage, setSelectedImage]   = useState(0);
@@ -40,6 +45,11 @@ export default function ProductPage() {
       setProduct(data);
       setCurrentPrice(data.sale_price || data.regular_price || data.price || "0");
       setLoading(false);
+
+      // Fetch reviews
+      fetch(`/api/reviews?product_id=${data.id}`)
+        .then(r => r.json())
+        .then(r => setReviews(Array.isArray(r) ? r : []));
 
       if (data.type === "variable") {
         fetch(`/api/variations?id=${data.id}`)
@@ -211,7 +221,7 @@ export default function ProductPage() {
             {product.categories?.[0] && (
               <span className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 font-black" style={{ fontFamily: "var(--font-inter)" }}>{product.categories[0].name}</span>
             )}
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: (product.name || "").replace(/darkgreen-sardine-406947\.hostingersite\.com/g, "www.perfectprints.pk") }} />
+            <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-tight break-words w-full" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: (product.name || "").replace(/[\|–—-]\s*(www\.)?perfectprints\.pk\s*/gi, "").replace(/[\|–—-]\s*(darkgreen-sardine-406947\.hostingersite\.com)\s*/gi, "").trim() }} />
             <div>
               <p className="text-[10px] uppercase tracking-widest text-neutral-400 mb-1" style={{ fontFamily: "var(--font-inter)" }}>Price</p>
               <div className="flex items-baseline gap-3">
@@ -267,8 +277,8 @@ export default function ProductPage() {
             </div>
             <div className="border-t border-black/10 dark:border-white/10 mt-2">
               {[
-                { title: "Description", content: (product.short_description || product.description || "").replace(/darkgreen-sardine-406947\.hostingersite\.com/g, "www.perfectprints.pk") },
-                { title: "Product Details", content: (product.description || "").replace(/darkgreen-sardine-406947\.hostingersite\.com/g, "www.perfectprints.pk") },
+                { title: "Description", content: (product.short_description || product.description || "").replace(/(www\.)?perfectprints\.pk/gi, "Perfect Prints").replace(/darkgreen-sardine-406947\.hostingersite\.com/gi, "Perfect Prints") },
+                { title: "Product Details", content: (product.description || "").replace(/(www\.)?perfectprints\.pk/gi, "Perfect Prints").replace(/darkgreen-sardine-406947\.hostingersite\.com/gi, "Perfect Prints") },
                 { title: "Shipping & Returns", content: "<p>Standard delivery across Pakistan in 3–5 working days. Free shipping on orders above PKR 3,000. Cash on Delivery available. Returns accepted within 7 days of delivery if item is defective or incorrect.</p>" },
               ].map((sec) => (
                 <div key={sec.title} className="border-b border-black/10 dark:border-white/10">
@@ -358,6 +368,186 @@ export default function ProductPage() {
         )}
 
       </div>
+      {/* ── REVIEWS SECTION ── */}
+      {product && (
+        <div className="max-w-7xl mx-auto px-4 md:px-16 py-16 border-t border-black/10 dark:border-white/10">
+
+          {/* Header */}
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <span className="text-[10px] tracking-[0.4em] text-neutral-400 font-black uppercase block mb-1" style={{ fontFamily: "var(--font-inter)" }}>CUSTOMER REVIEWS</span>
+              <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>
+                What Our Customers Say
+              </h3>
+            </div>
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} className={`w-4 h-4 ${s <= Math.round(reviews.reduce((a,r) => a + r.rating, 0) / reviews.length) ? "fill-yellow-400 text-yellow-400" : "text-neutral-300"}`} />
+                  ))}
+                </div>
+                <span className="text-sm font-black text-black dark:text-white">{(reviews.reduce((a,r) => a + r.rating, 0) / reviews.length).toFixed(1)}</span>
+                <span className="text-xs text-neutral-400">({reviews.length} reviews)</span>
+              </div>
+            )}
+          </div>
+
+          {/* Reviews Grid */}
+          {reviews.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+              {reviews.map((rev, i) => (
+                <div key={i} className="border border-black/10 dark:border-white/10 p-5 bg-neutral-50 dark:bg-[#09090b]">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-black uppercase text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>{rev.reviewer}</span>
+                        <span className="flex items-center gap-1 text-[10px] text-green-600 font-black uppercase">
+                          <CheckCircle className="w-3 h-3" /> Verified
+                        </span>
+                      </div>
+                      <div className="flex">
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} className={`w-3 h-3 ${s <= rev.rating ? "fill-yellow-400 text-yellow-400" : "text-neutral-300"}`} />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>
+                      {new Date(rev.date_created).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed" style={{ fontFamily: "var(--font-inter)" }} dangerouslySetInnerHTML={{ __html: rev.review }} />
+                  {/* Review Images */}
+                  {rev.review_images && rev.review_images.length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {rev.review_images.map((img: string, idx: number) => (
+                        <img key={idx} src={img} alt="" className="w-16 h-16 object-cover border border-black/10 dark:border-white/10" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 border border-black/10 dark:border-white/10 mb-12">
+              <p className="text-xs text-neutral-400 uppercase tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>No reviews yet — be the first!</p>
+            </div>
+          )}
+
+          {/* Review Form */}
+          <div className="border border-black/10 dark:border-white/10 p-6 md:p-8 bg-neutral-50 dark:bg-[#09090b]">
+            <h4 className="text-sm font-black uppercase tracking-widest text-black dark:text-white mb-6" style={{ fontFamily: "var(--font-montserrat)" }}>
+              Write a Review
+            </h4>
+
+            {reviewSubmitted ? (
+              <div className="flex items-center gap-3 text-green-600 py-4">
+                <CheckCircle className="w-5 h-5" />
+                <span className="text-sm font-black uppercase tracking-widest" style={{ fontFamily: "var(--font-montserrat)" }}>Review submitted! Thank you.</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Name */}
+                <input
+                  placeholder="Your Name"
+                  value={reviewForm.name}
+                  onChange={e => setReviewForm({...reviewForm, name: e.target.value})}
+                  className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 p-3 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400"
+                  style={{ fontFamily: "var(--font-inter)" }}
+                />
+
+                {/* Star Rating */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>Rating:</span>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(s => (
+                      <button key={s} onClick={() => setReviewForm({...reviewForm, rating: s})}>
+                        <Star className={`w-6 h-6 cursor-pointer transition-colors ${s <= reviewForm.rating ? "fill-yellow-400 text-yellow-400" : "text-neutral-300 hover:text-yellow-300"}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review Text */}
+                <textarea
+                  placeholder="Share your experience with this product..."
+                  value={reviewForm.text}
+                  onChange={e => setReviewForm({...reviewForm, text: e.target.value})}
+                  rows={4}
+                  className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 p-3 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400 resize-none"
+                  style={{ fontFamily: "var(--font-inter)" }}
+                />
+
+                {/* Image Upload */}
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer w-fit border border-black/10 dark:border-white/10 px-4 py-2 text-[10px] uppercase tracking-widest text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all" style={{ fontFamily: "var(--font-inter)" }}>
+                    <Upload className="w-3 h-3" />
+                    Add Photos
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files || []);
+                        const urls: string[] = [];
+                        for (const file of files.slice(0, 3)) {
+                          const reader = new FileReader();
+                          await new Promise<void>(resolve => {
+                            reader.onload = () => { urls.push(reader.result as string); resolve(); };
+                            reader.readAsDataURL(file);
+                          });
+                        }
+                        setReviewImages(prev => [...prev, ...urls].slice(0, 3));
+                      }}
+                    />
+                  </label>
+                  {reviewImages.length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {reviewImages.map((img, idx) => (
+                        <div key={idx} className="relative">
+                          <img src={img} alt="" className="w-16 h-16 object-cover border border-black/10 dark:border-white/10" />
+                          <button onClick={() => setReviewImages(prev => prev.filter((_,i) => i !== idx))} className="absolute -top-1 -right-1 bg-black text-white rounded-full w-4 h-4 flex items-center justify-center">
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!reviewForm.name || !reviewForm.text) return;
+                    setReviewSubmitting(true);
+                    await fetch("/api/reviews", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        product_id: product.id,
+                        reviewer: reviewForm.name,
+                        review: reviewForm.text,
+                        rating: reviewForm.rating,
+                        images: reviewImages,
+                      }),
+                    });
+                    setReviewSubmitting(false);
+                    setReviewSubmitted(true);
+                    setReviewForm({ name: "", rating: 5, text: "", images: [] });
+                    setReviewImages([]);
+                  }}
+                  disabled={!reviewForm.name || !reviewForm.text || reviewSubmitting}
+                  className="px-8 py-4 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ fontFamily: "var(--font-montserrat)" }}
+                >
+                  {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <CinematicFooter />
     </main>
   );
