@@ -18,7 +18,19 @@ function ShopContent() {
   useEffect(() => {
     const q = searchParams.get("search");
     if (q) setSearch(q);
-  }, [searchParams]);
+    const cat = searchParams.get("category");
+    if (cat) {
+      // Wait for categories to load then match slug
+      const interval = setInterval(() => {
+        if (categories.length > 0) {
+          const matched = categories.find((c: any) => c.slug === cat);
+          if (matched) setActiveCat(matched.id);
+          clearInterval(interval);
+        }
+      }, 100);
+      setTimeout(() => clearInterval(interval), 5000);
+    }
+  }, [searchParams, categories]);
 
   useEffect(() => {
     Promise.all([getProducts(100), getCategories()])
@@ -39,7 +51,7 @@ function ShopContent() {
     return list;
   }, [products, activeCat, sort, search]);
 
-  const activeCatName = activeCat === "all" ? "All Products" : categories.find(c => c.id === activeCat)?.name ?? "";
+  const activeCatName = activeCat === "all" ? "All Products" : (categories.find(c => c.id === activeCat)?.name ?? "").replace(/&amp;/g, "&");
 
   return (
     <main className="bg-white dark:bg-black text-black dark:text-white min-h-screen pt-24 pb-20 px-6 md:px-16 transition-colors duration-300">
@@ -175,7 +187,7 @@ function ShopContent() {
                   className="text-2xl md:text-3xl font-black uppercase hover:text-neutral-400 transition-colors text-black dark:text-white"
                   style={{ fontFamily: "var(--font-montserrat)" }}
                 >
-                  {cat.name}
+                  {cat.name.replace(/&amp;/g, "&")}
                 </button>
               ))}
             </div>
