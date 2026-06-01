@@ -22,7 +22,7 @@ declare global {
   }
 }
 
-function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: number, lng: number) => void; onClose: () => void }) {
+function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: number, lng: number, city?: string) => void; onClose: () => void }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -34,6 +34,7 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
   const [locating, setLocating] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
+  // Load Google Maps script
   useEffect(() => {
     if (window.google?.maps) { initMap(); return; }
     const existing = document.getElementById("google-maps-script");
@@ -49,14 +50,16 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
 
   function initMap() {
     if (!mapRef.current) return;
-    const defaultCenter = { lat: 31.5204, lng: 74.3587 };
+    const defaultCenter = { lat: 31.5204, lng: 74.3587 }; // Lahore
 
     const map = new window.google.maps.Map(mapRef.current, {
       center: defaultCenter,
       zoom: 13,
       disableDefaultUI: true,
       zoomControl: true,
-      styles: [{ featureType: "all", stylers: [{ saturation: -20 }] }],
+      styles: [
+        { featureType: "all", stylers: [{ saturation: -20 }] },
+      ],
     });
 
     const marker = new window.google.maps.Marker({
@@ -71,16 +74,19 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
     markerRef.current = marker;
     geocoderRef.current = geocoder;
 
+    // Marker drag end
     marker.addListener("dragend", () => {
       const pos = marker.getPosition();
       reverseGeocode(pos.lat(), pos.lng());
     });
 
+    // Map click
     map.addListener("click", (e: any) => {
       marker.setPosition(e.latLng);
       reverseGeocode(e.latLng.lat(), e.latLng.lng());
     });
 
+    // Search autocomplete
     if (inputRef.current) {
       const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
         componentRestrictions: { country: "pk" },
@@ -93,18 +99,36 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
         map.setZoom(16);
         marker.setPosition(place.geometry.location);
         setAddress(place.formatted_address || "");
+        // Extract city
+        const components = place.address_components || [];
+        const cityComp = components.find((c: any) =>
+          c.types.includes("locality") || c.types.includes("administrative_area_level_2")
+        );
+        if (cityComp) setCity(cityComp.long_name);
       });
       autocompleteRef.current = autocomplete;
     }
 
     setMapReady(true);
+
+    // Auto detect location
     detectLocation();
   }
+
+  const [city, setCity] = useState("");
 
   function reverseGeocode(lat: number, lng: number) {
     if (!geocoderRef.current) return;
     geocoderRef.current.geocode({ location: { lat, lng } }, (results: any[], status: string) => {
-      if (status === "OK" && results[0]) setAddress(results[0].formatted_address);
+      if (status === "OK" && results[0]) {
+        setAddress(results[0].formatted_address);
+        // Extract city from address components
+        const components = results[0].address_components || [];
+        const cityComp = components.find((c: any) =>
+          c.types.includes("locality") || c.types.includes("administrative_area_level_2")
+        );
+        if (cityComp) setCity(cityComp.long_name);
+      }
     });
   }
 
@@ -128,7 +152,7 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
   function handleConfirm() {
     const pos = markerRef.current?.getPosition();
     if (!pos || !address) return;
-    onConfirm(address, pos.lat(), pos.lng());
+    onConfirm(address, pos.lat(), pos.lng(), city);
   }
 
   return (
@@ -136,17 +160,19 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
       <div className="bg-white dark:bg-[#0a0a0a] w-full max-w-lg rounded-t-2xl overflow-hidden flex flex-col"
         style={{ maxHeight: "92vh", animation: "slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1)" }}>
 
+        {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-black/10 dark:bg-white/10" />
         </div>
 
+        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-black/10 dark:border-white/10">
           <div>
             <p className="font-black text-sm uppercase tracking-widest text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>
-              📍 Map Se Address Chunein
+              📍 Select Your Address
             </p>
             <p className="text-[10px] text-neutral-400 uppercase tracking-widest mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>
-              Pin drag karein ya search karein
+              Drag the pin or search your area
             </p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-white/10 flex items-center justify-center text-neutral-500 hover:bg-neutral-200 dark:hover:bg-white/20 transition-colors">
@@ -154,18 +180,20 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
           </button>
         </div>
 
+        {/* Search */}
         <div className="px-4 pt-3 pb-2">
           <div className="flex items-center gap-2 bg-neutral-50 dark:bg-white/5 border border-black/10 dark:border-white/10 px-3 py-2.5 rounded-lg">
             <span className="text-neutral-400 text-sm">🔍</span>
             <input
               ref={inputRef}
-              placeholder="Area ya gali ka naam likhein..."
+              placeholder="Search your area or street..."
               className="flex-1 bg-transparent outline-none text-sm text-black dark:text-white placeholder:text-neutral-400"
               style={{ fontFamily: "var(--font-inter)" }}
             />
           </div>
         </div>
 
+        {/* Current Location Button */}
         <div className="px-4 pb-2">
           <button
             onClick={detectLocation}
@@ -174,13 +202,14 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
             style={{ fontFamily: "var(--font-inter)" }}
           >
             {locating ? (
-              <><span className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" /> Dhundh raha hai...</>
+              <><span className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" /> Detecting location...</>
             ) : (
-              <><span>🎯</span> Meri current location use karo</>
+              <><span>🎯</span> Use My Current Location</>
             )}
           </button>
         </div>
 
+        {/* Map */}
         <div className="mx-4 mb-2 rounded-xl overflow-hidden border border-black/10 dark:border-white/10" style={{ height: 240 }}>
           <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
           {!mapReady && (
@@ -190,14 +219,20 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
           )}
         </div>
 
+        {/* Address Preview */}
         <div className={`mx-4 mb-3 px-4 py-3 rounded-xl border transition-all ${address ? "border-green-300 dark:border-green-500/30 bg-green-50 dark:bg-green-500/5" : "border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-white/5"}`}>
           {address ? (
-            <p className="text-xs text-green-700 dark:text-green-400 font-semibold" style={{ fontFamily: "var(--font-inter)" }}>✅ {address}</p>
+            <p className="text-xs text-green-700 dark:text-green-400 font-semibold" style={{ fontFamily: "var(--font-inter)" }}>
+              ✅ {address}
+            </p>
           ) : (
-            <p className="text-xs text-neutral-400 uppercase tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>📍 Map pe tap karein ya location button dabayein</p>
+            <p className="text-xs text-neutral-400 uppercase tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>
+              📍 Tap on the map or use location button
+            </p>
           )}
         </div>
 
+        {/* Confirm Button */}
         <div className="px-4 pb-6">
           <button
             onClick={handleConfirm}
@@ -205,10 +240,11 @@ function MapPopup({ onConfirm, onClose }: { onConfirm: (address: string, lat: nu
             className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-xs transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:opacity-80"
             style={{ fontFamily: "var(--font-montserrat)" }}
           >
-            {address ? "✓ Yeh Address Confirm Karein" : "Pehle Location Select Karein"}
+            {address ? "✓ Confirm This Address" : "Select a Location First"}
           </button>
         </div>
       </div>
+
       <style>{`@keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }`}</style>
     </div>
   );
@@ -222,7 +258,13 @@ function CheckoutInner() {
   const shipping = 200;
   const grandTotal = total + shipping;
 
-  const [form, setForm] = useState({ name: "", phone: "", whatsapp: "", address: "", city: "" });
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    whatsapp: "",
+    address: "",
+    city: "",
+  });
   const [sameAsPhone, setSameAsPhone] = useState(true);
   const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showMap, setShowMap] = useState(false);
@@ -256,19 +298,34 @@ function CheckoutInner() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Phone blur pe auto-format
   const handlePhoneBlur = (field: "phone" | "whatsapp") => {
     const val = form[field];
     if (val) setForm((prev) => ({ ...prev, [field]: formatPakistaniNumber(val) }));
   };
 
-  const handleMapConfirm = (address: string, lat: number, lng: number) => {
-    setForm((prev) => ({ ...prev, address }));
+  // Map confirm — auto fill address + city
+  const handleMapConfirm = (address: string, lat: number, lng: number, city?: string) => {
+    setForm((prev) => ({ 
+      ...prev, 
+      address,
+      city: city || prev.city,
+    }));
     setMapCoords({ lat, lng });
     setShowMap(false);
   };
 
+  // WhatsApp number = phone agar same checkbox checked
   const whatsappNumber = sameAsPhone ? form.phone : form.whatsapp;
-  const isFormValid = form.name && form.phone && form.address && form.city && whatsappNumber && paymentMethod && items.length > 0;
+
+  const isFormValid =
+    form.name &&
+    form.phone &&
+    form.address &&
+    form.city &&
+    whatsappNumber &&
+    paymentMethod &&
+    items.length > 0;
 
   const handleOrder = async () => {
     if (!isFormValid) return;
@@ -283,9 +340,17 @@ function CheckoutInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name, phone: finalPhone, whatsapp: finalWhatsapp,
-          address: form.address, city: form.city, mapCoords,
-          paymentMethod, items, shipping, total: grandTotal, source,
+          name: form.name,
+          phone: finalPhone,
+          whatsapp: finalWhatsapp,
+          address: form.address,
+          city: form.city,
+          mapCoords,
+          paymentMethod,
+          items,
+          shipping,
+          total: grandTotal,
+          source,
         }),
       });
 
@@ -317,10 +382,20 @@ function CheckoutInner() {
         `*Payment:* ${paymentMethod}\n\nEstimated delivery: 3–5 working days.\n— *PerfectPrints Team* 🙏`;
 
       const orderData = encodeURIComponent(JSON.stringify({
-        orderNumber: data.orderNumber, name: form.name, phone: finalPhone,
-        whatsapp: finalWhatsapp, address: form.address, city: form.city, mapCoords,
-        paymentMethod, items, shipping, total: grandTotal,
-        ownerMessage, customerMessage, customerPhone: finalWhatsapp,
+        orderNumber: data.orderNumber,
+        name: form.name,
+        phone: finalPhone,
+        whatsapp: finalWhatsapp,
+        address: form.address,
+        city: form.city,
+        mapCoords,
+        paymentMethod,
+        items,
+        shipping,
+        total: grandTotal,
+        ownerMessage,
+        customerMessage,
+        customerPhone: finalWhatsapp,
         date: new Date().toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" }),
       }));
 
@@ -331,6 +406,7 @@ function CheckoutInner() {
       setTimeout(() => {
         window.open(`https://wa.me/923010148055?text=${encodeURIComponent(ownerMessage)}`, "_blank");
       }, 800);
+
       setTimeout(() => {
         window.open(`https://wa.me/${finalWhatsapp.replace("+", "")}?text=${encodeURIComponent(customerMessage)}`, "_blank");
       }, 2000);
@@ -344,70 +420,131 @@ function CheckoutInner() {
   return (
     <>
       {showMap && <MapPopup onConfirm={handleMapConfirm} onClose={() => setShowMap(false)} />}
+
       <main className="bg-white dark:bg-black text-black dark:text-white min-h-screen py-16 px-4 sm:px-6 md:px-16 transition-colors duration-300">
         <div className="max-w-[1200px] mx-auto grid md:grid-cols-2 gap-10 md:gap-16">
 
+          {/* LEFT — FORM */}
           <div className="space-y-8">
             <h2 className="text-2xl font-black uppercase tracking-widest border-b border-black/10 dark:border-white/10 pb-4" style={{ fontFamily: "var(--font-montserrat)" }}>
               Delivery Information
             </h2>
+
             <div className="space-y-4">
-              <input name="name" placeholder="Full Name" value={form.name} onChange={handleChange}
+              {/* Name */}
+              <input
+                name="name"
+                placeholder="Full Name"
+                value={form.name}
+                onChange={handleChange}
                 className="w-full bg-neutral-50 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 p-4 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400 transition-colors"
-                style={{ fontFamily: "var(--font-inter)" }} />
+                style={{ fontFamily: "var(--font-inter)" }}
+              />
 
-              <input name="phone" placeholder="Phone Number (03XXXXXXXXX)" value={form.phone}
-                onChange={handleChange} onBlur={() => handlePhoneBlur("phone")}
+              {/* Phone */}
+              <input
+                name="phone"
+                placeholder="Phone Number (03XXXXXXXXX)"
+                value={form.phone}
+                onChange={handleChange}
+                onBlur={() => handlePhoneBlur("phone")}
                 className="w-full bg-neutral-50 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 p-4 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400 transition-colors"
-                style={{ fontFamily: "var(--font-inter)" }} />
+                style={{ fontFamily: "var(--font-inter)" }}
+              />
 
+              {/* WhatsApp field */}
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={sameAsPhone} onChange={(e) => setSameAsPhone(e.target.checked)} className="w-3.5 h-3.5 accent-black dark:accent-white" />
-                  <span className="text-[11px] text-neutral-400 uppercase tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>WhatsApp number same as phone</span>
+                  <input
+                    type="checkbox"
+                    checked={sameAsPhone}
+                    onChange={(e) => setSameAsPhone(e.target.checked)}
+                    className="w-3.5 h-3.5 accent-black dark:accent-white"
+                  />
+                  <span className="text-[11px] text-neutral-400 uppercase tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>
+                    WhatsApp number same as phone
+                  </span>
                 </label>
+
                 {!sameAsPhone && (
-                  <input name="whatsapp" placeholder="WhatsApp Number (03XXXXXXXXX)" value={form.whatsapp}
-                    onChange={handleChange} onBlur={() => handlePhoneBlur("whatsapp")}
+                  <input
+                    name="whatsapp"
+                    placeholder="WhatsApp Number (03XXXXXXXXX)"
+                    value={form.whatsapp}
+                    onChange={handleChange}
+                    onBlur={() => handlePhoneBlur("whatsapp")}
                     className="w-full bg-neutral-50 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 p-4 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400 transition-colors"
-                    style={{ fontFamily: "var(--font-inter)" }} />
+                    style={{ fontFamily: "var(--font-inter)" }}
+                  />
                 )}
               </div>
 
+              {/* Address + Map Button */}
               <div className="space-y-2">
-                <input name="address" placeholder="Full Address" value={form.address} onChange={handleChange}
+                <input
+                  name="address"
+                  placeholder="Full Address"
+                  value={form.address}
+                  onChange={handleChange}
                   className={`w-full bg-neutral-50 dark:bg-[#0a0a0a] border p-4 text-sm outline-none transition-colors text-black dark:text-white placeholder:text-neutral-400 ${mapCoords ? "border-green-400 dark:border-green-500/50 bg-green-50/30 dark:bg-green-500/5" : "border-black/10 dark:border-white/10 focus:border-black dark:focus:border-white"}`}
-                  style={{ fontFamily: "var(--font-inter)" }} />
-                <button type="button" onClick={() => setShowMap(true)}
+                  style={{ fontFamily: "var(--font-inter)" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowMap(true)}
                   className="w-full flex items-center gap-2 px-4 py-3 border border-dashed border-black/20 dark:border-white/20 text-neutral-500 dark:text-neutral-400 text-[11px] uppercase tracking-widest font-semibold hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-colors"
-                  style={{ fontFamily: "var(--font-inter)" }}>
+                  style={{ fontFamily: "var(--font-inter)" }}
+                >
                   <span>📍</span>
-                  <span>{mapCoords ? "✓ Map se address select hua — dobara chunein" : "Map se address choose karein (recommended)"}</span>
+                  <span>{mapCoords ? "✓ Address selected via map — change it" : "Choose Address from Map (Recommended)"}</span>
                 </button>
               </div>
 
-              <input name="city" placeholder="City" value={form.city} onChange={handleChange}
+              {/* City */}
+              <input
+                name="city"
+                placeholder="City"
+                value={form.city}
+                onChange={handleChange}
                 className="w-full bg-neutral-50 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 p-4 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400 transition-colors"
-                style={{ fontFamily: "var(--font-inter)" }} />
+                style={{ fontFamily: "var(--font-inter)" }}
+              />
             </div>
 
+            {/* Payment */}
             <div className="space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>Payment Method</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>
+                Payment Method
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {["Cash on Delivery", "EasyPaisa / JazzCash", "Bank Transfer"].map((method) => (
-                  <button key={method} onClick={() => setPaymentMethod(method)}
+                  <button
+                    key={method}
+                    onClick={() => setPaymentMethod(method)}
                     className={`py-4 border text-[10px] font-semibold uppercase tracking-widest transition-all ${paymentMethod === method ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white" : "border-black/10 dark:border-white/10 text-neutral-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white"}`}
-                    style={{ fontFamily: "var(--font-inter)" }}>{method}</button>
+                    style={{ fontFamily: "var(--font-inter)" }}
+                  >
+                    {method}
+                  </button>
                 ))}
               </div>
             </div>
 
-            {error && <p className="text-red-500 text-xs uppercase tracking-widest border border-red-200 dark:border-red-400/20 bg-red-50 dark:bg-red-400/5 p-3" style={{ fontFamily: "var(--font-inter)" }}>⚠ {error}</p>}
+            {error && (
+              <p className="text-red-500 text-xs uppercase tracking-widest border border-red-200 dark:border-red-400/20 bg-red-50 dark:bg-red-400/5 p-3" style={{ fontFamily: "var(--font-inter)" }}>
+                ⚠ {error}
+              </p>
+            )}
 
-            <button onClick={handleOrder} disabled={!isFormValid || loading}
+            <button
+              onClick={handleOrder}
+              disabled={!isFormValid || loading}
               className="w-full py-5 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-xs hover:opacity-80 transition-all disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{ fontFamily: "var(--font-montserrat)" }}>
-              {loading ? <><span className="w-4 h-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />Processing...</> : "Confirm Order"}
+              style={{ fontFamily: "var(--font-montserrat)" }}
+            >
+              {loading ? (
+                <><span className="w-4 h-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />Processing...</>
+              ) : "Confirm Order"}
             </button>
 
             <p className="text-[10px] text-neutral-400 uppercase tracking-widest text-center" style={{ fontFamily: "var(--font-inter)" }}>
@@ -415,8 +552,11 @@ function CheckoutInner() {
             </p>
           </div>
 
+          {/* RIGHT — ORDER SUMMARY */}
           <div className="bg-neutral-50 dark:bg-[#050507] border border-black/10 dark:border-white/10 p-6 sm:p-8 h-fit md:sticky md:top-10 order-first md:order-last">
-            <h2 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-black/10 dark:border-white/10 pb-4" style={{ fontFamily: "var(--font-montserrat)" }}>Order Summary</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-black/10 dark:border-white/10 pb-4" style={{ fontFamily: "var(--font-montserrat)" }}>
+              Order Summary
+            </h2>
             {items.length === 0 ? (
               <p className="text-neutral-400 text-xs uppercase tracking-widest text-center py-8" style={{ fontFamily: "var(--font-inter)" }}>Your cart is empty</p>
             ) : (
@@ -432,7 +572,9 @@ function CheckoutInner() {
                         <p key={k} className="text-[10px] text-neutral-400 uppercase" style={{ fontFamily: "var(--font-inter)" }}>{k}: {v}</p>
                       ))}
                       <p className="text-[10px] text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>Qty: {item.quantity}</p>
-                      <p className="text-xs font-black text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>PKR {(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
+                      <p className="text-xs font-black text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>
+                        PKR {(parseFloat(item.price) * item.quantity).toLocaleString()}
+                      </p>
                     </div>
                     <button onClick={() => removeItem(item.id)} className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors flex-shrink-0 mt-1">
                       <X className="w-4 h-4" />
