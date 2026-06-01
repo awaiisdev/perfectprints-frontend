@@ -419,8 +419,6 @@ function CheckoutInner() {
 
   return (
     <>
-      {showMap && <MapPopup onConfirm={handleMapConfirm} onClose={() => setShowMap(false)} />}
-
       <main className="bg-white dark:bg-black text-black dark:text-white min-h-screen py-16 px-4 sm:px-6 md:px-16 transition-colors duration-300">
         <div className="max-w-[1200px] mx-auto grid md:grid-cols-2 gap-10 md:gap-16">
 
@@ -479,25 +477,16 @@ function CheckoutInner() {
                 )}
               </div>
 
-              {/* Address + Map Button */}
+              {/* Address */}
               <div className="space-y-2">
                 <input
                   name="address"
                   placeholder="Full Address"
                   value={form.address}
                   onChange={handleChange}
-                  className={`w-full bg-neutral-50 dark:bg-[#0a0a0a] border p-4 text-sm outline-none transition-colors text-black dark:text-white placeholder:text-neutral-400 ${mapCoords ? "border-green-400 dark:border-green-500/50 bg-green-50/30 dark:bg-green-500/5" : "border-black/10 dark:border-white/10 focus:border-black dark:focus:border-white"}`}
+                  className="w-full bg-neutral-50 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 p-4 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400 transition-colors"
                   style={{ fontFamily: "var(--font-inter)" }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowMap(true)}
-                  className="w-full flex items-center gap-2 px-4 py-3 border border-dashed border-black/20 dark:border-white/20 text-neutral-500 dark:text-neutral-400 text-[11px] uppercase tracking-widest font-semibold hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-colors"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
-                  <span>📍</span>
-                  <span>{mapCoords ? "✓ Address selected via map — change it" : "Choose Address from Map (Recommended)"}</span>
-                </button>
               </div>
 
               {/* City */}
