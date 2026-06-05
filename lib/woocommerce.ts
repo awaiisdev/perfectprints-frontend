@@ -1,6 +1,4 @@
-const BASE = typeof window !== "undefined"
-  ? ""
-  : "https://www.perfectprints.pk";
+const BASE = "";
 
 export async function getProducts(perPage = 20, category?: string) {
   let url = `${BASE}/api/products?per_page=${perPage}`;
