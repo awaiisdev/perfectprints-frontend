@@ -363,7 +363,7 @@ function CheckoutInner() {
 
       const itemsList = items.map((i) => {
         const attrs = Object.entries(i.attributes || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
-        return `• ${i.name}${attrs ? ` | ${attrs}` : ""} | x${i.quantity} = PKR ${(parseFloat(i.price) * i.quantity).toLocaleString()}`;
+        return `• ${i.quantity}x ${i.name}${attrs ? ` (${attrs})` : ""} = PKR ${(parseFloat(i.price) * i.quantity).toLocaleString()}`;
       }).join("\n");
 
       const mapsLink = mapCoords ? `\n📌 Google Maps: https://maps.google.com/?q=${mapCoords.lat},${mapCoords.lng}` : "";
