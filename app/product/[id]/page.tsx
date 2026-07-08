@@ -34,14 +34,17 @@ export async function generateMetadata({
       title: cleanName,
       description,
       images: image ? [{ url: image }] : undefined,
-      type: "website",
+      siteName: "Perfect Prints",
     },
     alternates: {
       canonical: `/product/${id}`,
     },
     other: {
+      "og:type": "product",
       "product:price:amount": price || "",
       "product:price:currency": "PKR",
+      "og:availability":
+        product.stock_status === "instock" ? "instock" : "oos",
     },
   };
 }
