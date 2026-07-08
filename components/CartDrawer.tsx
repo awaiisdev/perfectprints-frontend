@@ -69,8 +69,10 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                   </button>
                 </div>
               ) : (
-                items.map((item) => (
-                  <div key={`${item.id}-${JSON.stringify(item.attributes)}`} className="flex gap-4 border-b border-black/10 dark:border-white/10 pb-6">
+                items.map((item) => {
+                  const lineKey = JSON.stringify({ id: item.id, attributes: item.attributes || {}, customFields: item.customFields || [] });
+                  return (
+                  <div key={lineKey} className="flex gap-4 border-b border-black/10 dark:border-white/10 pb-6">
                     {/* Image */}
                     <div className="w-16 sm:w-20 h-20 sm:h-24 bg-neutral-100 dark:bg-neutral-900 border border-black/10 dark:border-white/10 overflow-hidden flex-shrink-0">
                       {item.image && (
@@ -87,12 +89,18 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                           dangerouslySetInnerHTML={{ __html: item.name }}
                         />
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.id, lineKey)}
                           className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
+
+                      {item.isCustomOrder && (
+                        <span className="inline-block w-fit text-[9px] font-black uppercase tracking-widest text-white bg-black dark:bg-white dark:text-black px-2 py-0.5 mt-1">
+                          Custom Order
+                        </span>
+                      )}
 
                       {Object.entries(item.attributes || {}).map(([k, v]) => (
                         <p
@@ -104,11 +112,17 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                         </p>
                       ))}
 
+                      {(item.customFields || []).map((f, idx) => (
+                        <p key={idx} className={`text-[10px] uppercase tracking-wider ${f.type === "photo" ? "text-green-600" : "text-neutral-400"}`} style={{ fontFamily: "var(--font-inter)" }}>
+                          {f.type === "photo" ? `✓ ${f.label}` : `${f.label}: ${f.value}`}
+                        </p>
+                      ))}
+
                       <div className="flex justify-between items-center mt-2">
                         {/* Qty Controls */}
                         <div className="flex items-center border border-black/10 dark:border-white/10">
                           <button
-                            onClick={() => updateQty(item.id, item.quantity - 1)}
+                            onClick={() => updateQty(item.id, item.quantity - 1, lineKey)}
                             className="px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10 text-black dark:text-white transition-colors"
                           >
                             <Minus className="w-3 h-3" />
@@ -120,7 +134,7 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQty(item.id, item.quantity + 1)}
+                            onClick={() => updateQty(item.id, item.quantity + 1, lineKey)}
                             className="px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10 text-black dark:text-white transition-colors"
                           >
                             <Plus className="w-3 h-3" />
@@ -136,7 +150,8 @@ export default function CartDrawer({ isOpen, setIsOpen }: { isOpen: boolean; set
                       </div>
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
 

@@ -9,6 +9,9 @@ interface CartItem {
   image: string;
   quantity: number;
   attributes?: Record<string, string>;
+  // Custom order fields (photos/names customer uploads on the product page)
+  isCustomOrder?: boolean;
+  customFields?: { label: string; type: "name" | "photo"; value: string }[];
 }
 
 interface CartContextType {
@@ -16,12 +19,22 @@ interface CartContextType {
   count: number;
   total: number;
   addItem: (item: CartItem) => void;
-  removeItem: (id: number) => void;
-  updateQty: (id: number, qty: number) => void;
+  removeItem: (id: number, key?: string) => void;
+  updateQty: (id: number, qty: number, key?: string) => void;
   clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextType>({} as CartContextType);
+
+// Har cart line ki unique pehchaan — id + attributes + custom fields
+// (isse alag customization wale same product ke items merge nahi hote)
+function lineKey(item: Pick<CartItem, "id" | "attributes" | "customFields">) {
+  return JSON.stringify({
+    id: item.id,
+    attributes: item.attributes || {},
+    customFields: item.customFields || [],
+  });
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -42,23 +55,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = (item: CartItem) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+      const key = lineKey(item);
+      const existing = prev.find((i) => lineKey(i) === key);
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          lineKey(i) === key ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
       return [...prev, { ...item, quantity: 1 }];
     });
   };
 
-  const removeItem = (id: number) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  // key param diya gaya hai taake same product id ki alag customized lines
+  // (jaise alag naam/photo wale do custom items) galti se mix na hon
+  const removeItem = (id: number, key?: string) => {
+    setItems((prev) => prev.filter((i) => (key ? lineKey(i) !== key : i.id !== id)));
   };
 
-  const updateQty = (id: number, qty: number) => {
-    if (qty < 1) return removeItem(id);
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i)));
+  const updateQty = (id: number, qty: number, key?: string) => {
+    if (qty < 1) return removeItem(id, key);
+    setItems((prev) =>
+      prev.map((i) => {
+        const matches = key ? lineKey(i) === key : i.id === id;
+        return matches ? { ...i, quantity: qty } : i;
+      })
+    );
   };
 
   const clearCart = () => setItems([]);

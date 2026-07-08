@@ -363,7 +363,8 @@ function CheckoutInner() {
 
       const itemsList = items.map((i) => {
         const attrs = Object.entries(i.attributes || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
-        return `• ${i.quantity}x ${i.name}${attrs ? ` (${attrs})` : ""} = PKR ${(parseFloat(i.price) * i.quantity).toLocaleString()}`;
+        const customs = (i.customFields || []).map((f: any) => `${f.label}: ${f.value}`).join(", ");
+        return `• ${i.quantity}x ${i.name}${attrs ? ` (${attrs})` : ""}${customs ? `\n   ${customs}` : ""} = PKR ${(parseFloat(i.price) * i.quantity).toLocaleString()}`;
       }).join("\n");
 
       const mapsLink = mapCoords ? `\n📌 Google Maps: https://maps.google.com/?q=${mapCoords.lat},${mapCoords.lng}` : "";
@@ -550,26 +551,39 @@ function CheckoutInner() {
               <p className="text-neutral-400 text-xs uppercase tracking-widest text-center py-8" style={{ fontFamily: "var(--font-inter)" }}>Your cart is empty</p>
             ) : (
               <div className="space-y-4 mb-8">
-                {items.map((item) => (
-                  <div key={`${item.id}-${JSON.stringify(item.attributes)}`} className="flex gap-4 items-start">
+                {items.map((item) => {
+                  const lineKey = JSON.stringify({ id: item.id, attributes: item.attributes || {}, customFields: item.customFields || [] });
+                  return (
+                  <div key={lineKey} className="flex gap-4 items-start">
                     <div className="w-16 h-20 bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 overflow-hidden flex-shrink-0">
                       {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
                     </div>
                     <div className="flex flex-col justify-center gap-1 flex-grow">
                       <h3 className="text-xs font-black uppercase text-black dark:text-white leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: item.name }} />
+                      {item.isCustomOrder && (
+                        <span className="inline-block w-fit text-[9px] font-black uppercase tracking-widest text-white bg-black dark:bg-white dark:text-black px-2 py-0.5">
+                          Custom Order
+                        </span>
+                      )}
                       {Object.entries(item.attributes || {}).map(([k, v]) => (
                         <p key={k} className="text-[10px] text-neutral-400 uppercase" style={{ fontFamily: "var(--font-inter)" }}>{k}: {v}</p>
+                      ))}
+                      {(item.customFields || []).map((f: any, idx: number) => (
+                        <p key={idx} className={`text-[10px] uppercase ${f.type === "photo" ? "text-green-600" : "text-neutral-400"}`} style={{ fontFamily: "var(--font-inter)" }}>
+                          {f.type === "photo" ? `✓ ${f.label}` : `${f.label}: ${f.value}`}
+                        </p>
                       ))}
                       <p className="text-[10px] text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>Qty: {item.quantity}</p>
                       <p className="text-xs font-black text-black dark:text-white" style={{ fontFamily: "var(--font-montserrat)" }}>
                         PKR {(parseFloat(item.price) * item.quantity).toLocaleString()}
                       </p>
                     </div>
-                    <button onClick={() => removeItem(item.id)} className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors flex-shrink-0 mt-1">
+                    <button onClick={() => removeItem(item.id, lineKey)} className="text-neutral-300 dark:text-neutral-600 hover:text-red-500 transition-colors flex-shrink-0 mt-1">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             <div className="space-y-3 border-t border-black/10 dark:border-white/10 pt-6 text-xs uppercase font-semibold" style={{ fontFamily: "var(--font-inter)" }}>

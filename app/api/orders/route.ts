@@ -33,18 +33,20 @@ export async function POST(req: Request) {
         city: city,
         country: "PK",
       },
-      line_items: items.map((item: any) => ({
-        product_id: item.id,
-        quantity: item.quantity,
-        ...(item.attributes && Object.keys(item.attributes).length > 0
-          ? {
-              meta_data: Object.entries(item.attributes).map(([key, value]) => ({
-                key,
-                value,
-              })),
-            }
-          : {}),
-      })),
+      line_items: items.map((item: any) => {
+        const lineMeta: { key: string; value: string }[] = [];
+        Object.entries(item.attributes || {}).forEach(([key, value]) => {
+          lineMeta.push({ key, value: value as string });
+        });
+        (item.customFields || []).forEach((f: any) => {
+          lineMeta.push({ key: f.label, value: f.value });
+        });
+        return {
+          product_id: item.id,
+          quantity: item.quantity,
+          ...(lineMeta.length > 0 ? { meta_data: lineMeta } : {}),
+        };
+      }),
       shipping_lines: [
         {
           method_id: "flat_rate",

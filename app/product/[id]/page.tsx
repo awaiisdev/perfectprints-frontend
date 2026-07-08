@@ -34,6 +34,12 @@ export default function ProductPage() {
   const [wished, setWished]                 = useState(false);
   const [currentPrice, setCurrentPrice]     = useState<string>("");
 
+  // ── Custom Order fields (up to 2 photos + 2 names, labels set in WP admin) ──
+  const [customValues, setCustomValues]     = useState<Record<string, string>>({});
+  const [customPreviews, setCustomPreviews] = useState<Record<string, string>>({});
+  const [uploadingKey, setUploadingKey]     = useState<string | null>(null);
+  const [customError, setCustomError]       = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!id) return;
@@ -114,7 +120,7 @@ export default function ProductPage() {
   };
 
   const handleAddToBag = () => {
-    if (!allAttrsSelected()) return;
+    if (!canAdd) return;
     const matched = getMatchedVariation(selectedAttributes);
     const img = matched?.image?.src || product.images?.[0]?.src || "";
     addItem({
@@ -125,6 +131,14 @@ export default function ProductPage() {
       image: img,
       quantity: 1,
       attributes: selectedAttributes,
+      ...(isCustomOrder ? {
+        isCustomOrder: true,
+        customFields: customFieldDefs.map((f) => ({
+          label: f.label,
+          type: f.type,
+          value: customValues[f.key] || "",
+        })),
+      } : {}),
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2500);
@@ -139,7 +153,7 @@ export default function ProductPage() {
   };
 
   const handleBuyNow = () => {
-    if (!allAttrsSelected()) return;
+    if (!canAdd) return;
     handleAddToBag();
     setTimeout(() => router.push("/checkout"), 300);
   };
@@ -158,7 +172,83 @@ export default function ProductPage() {
   const images       = product.images?.length > 0 ? product.images : [{ src: "" }];
   const variantAttrs = product.attributes?.filter((a: any) => a.variation) || [];
   const hasVariants  = variantAttrs.length > 0;
-  const canAdd       = allAttrsSelected();
+
+  // Custom Order field definitions — driven by labels set in WordPress admin.
+  // Empty label = field not used for this product.
+  const customFieldDefs: { key: string; type: "name" | "photo"; label: string }[] = [
+    { key: "name1",  type: "name" as const,  label: product.pp_name1_label  || "" },
+    { key: "name2",  type: "name" as const,  label: product.pp_name2_label  || "" },
+    { key: "photo1", type: "photo" as const, label: product.pp_photo1_label || "" },
+    { key: "photo2", type: "photo" as const, label: product.pp_photo2_label || "" },
+  ].filter((f) => f.label.trim().length > 0);
+
+  const isCustomOrder = !!product.pp_custom_order && customFieldDefs.length > 0;
+  const customFieldsValid =
+    !isCustomOrder || customFieldDefs.every((f) => !!customValues[f.key]?.trim());
+
+  const canAdd = allAttrsSelected() && customFieldsValid;
+
+  // Photo ko upload se pehle chhota/compress karta hai (max 1400px, JPEG 75%)
+  // taake customer ke phone ki 5-8MB photo turant upload ho jaye, atki na rahe.
+  const compressImage = (file: File, maxDimension = 1400, quality = 0.75): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { reject(new Error("canvas error")); return; }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleCustomPhotoChange = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCustomError(null);
+    setUploadingKey(key);
+    try {
+      const base64 = await compressImage(file);
+      setCustomPreviews((prev) => ({ ...prev, [key]: base64 }));
+      const res = await fetch("/api/custom-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64 }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setCustomValues((prev) => ({ ...prev, [key]: data.url }));
+      } else {
+        setCustomError("Photo upload nahi hui, dobara try karein.");
+        setCustomPreviews((prev) => ({ ...prev, [key]: "" }));
+      }
+    } catch {
+      setCustomError("Photo upload nahi hui, dobara try karein.");
+      setCustomPreviews((prev) => ({ ...prev, [key]: "" }));
+    } finally {
+      setUploadingKey(null);
+    }
+  };
 
   return (
     <main className="bg-white dark:bg-black text-black dark:text-white min-h-screen py-20 px-4 md:px-16 transition-colors duration-300">
@@ -264,11 +354,69 @@ export default function ProductPage() {
                 </div>
               </div>
             ))}
-            {hasVariants && !canAdd && (
+            {hasVariants && !allAttrsSelected() && (
               <p className="text-[11px] text-neutral-400 uppercase tracking-widest border border-black/10 dark:border-white/10 px-4 py-3" style={{ fontFamily: "var(--font-inter)" }}>
                 ⚠ Please select {variantAttrs.filter((a: any) => !selectedAttributes[a.name]).map((a: any) => a.name).join(" & ")} to continue
               </p>
             )}
+
+            {/* ── CUSTOM ORDER FIELDS ── */}
+            {isCustomOrder && (
+              <div className="border border-black/10 dark:border-white/10 p-5 space-y-4 bg-neutral-50 dark:bg-[#0a0a0a]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white" style={{ fontFamily: "var(--font-inter)" }}>
+                  ✏️ Customize This Order
+                </p>
+
+                {customFieldDefs.filter((f) => f.type === "name").map((f) => (
+                  <div key={f.key} className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>
+                      {f.label} *
+                    </label>
+                    <input
+                      value={customValues[f.key] || ""}
+                      onChange={(e) => setCustomValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                      placeholder={f.label}
+                      className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 p-3 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400"
+                      style={{ fontFamily: "var(--font-inter)" }}
+                    />
+                  </div>
+                ))}
+
+                {customFieldDefs.filter((f) => f.type === "photo").map((f) => (
+                  <div key={f.key} className="space-y-1.5">
+                    <label className="text-[10px] uppercase tracking-widest text-neutral-400" style={{ fontFamily: "var(--font-inter)" }}>
+                      {f.label} *
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer w-fit border border-black/20 dark:border-white/20 px-4 py-2.5 text-[10px] uppercase tracking-widest text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">
+                      <Upload className="w-3.5 h-3.5" />
+                      {uploadingKey === f.key ? "Uploading..." : customValues[f.key] ? "Change Photo" : `Choose Photo`}
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleCustomPhotoChange(f.key, e)} disabled={uploadingKey === f.key} />
+                    </label>
+                    {customPreviews[f.key] && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <img src={customPreviews[f.key]} alt="" className="w-16 h-16 object-cover border border-black/10 dark:border-white/10" />
+                        {uploadingKey === f.key ? (
+                          <span className="text-[10px] text-neutral-400 uppercase tracking-widest">Uploading...</span>
+                        ) : customValues[f.key] ? (
+                          <span className="text-[10px] text-green-600 uppercase tracking-widest flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Uploaded</span>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {customError && (
+                  <p className="text-[10px] text-red-500 uppercase tracking-widest">⚠ {customError}</p>
+                )}
+              </div>
+            )}
+
+            {allAttrsSelected() && !customFieldsValid && (
+              <p className="text-[11px] text-neutral-400 uppercase tracking-widest border border-black/10 dark:border-white/10 px-4 py-3" style={{ fontFamily: "var(--font-inter)" }}>
+                ⚠ Please fill all required fields above to continue
+              </p>
+            )}
+
             <div className="flex flex-col gap-3 pt-2">
               <button onClick={handleAddToBag} disabled={!canAdd}
                 className={`w-full py-5 font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-2 ${canAdd ? "bg-black dark:bg-white text-white dark:text-black hover:opacity-80 cursor-pointer" : "bg-black/10 dark:bg-white/10 text-black/30 dark:text-white/30 cursor-not-allowed"}`}
