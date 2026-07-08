@@ -21,15 +21,59 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Perfect Prints — Custom Printing Pakistan",
-  description: "Premium custom T-shirts, hoodies, mugs, DTF prints & personalized gifts across Pakistan.",
+  // IMPORTANT: change this if your live domain is different from perfectprints.pk
+  metadataBase: new URL("https://perfectprints.pk"),
+  title: {
+    default: "Perfect Prints — Custom Printing Pakistan",
+    // Any page that sets its own title (via generateMetadata) will show as
+    // "That Title | Perfect Prints" automatically because of this template.
+    template: "%s | Perfect Prints",
+  },
+  description:
+    "Premium custom T-shirts, hoodies, mugs, DTF prints & personalized gifts across Pakistan. Zero minimum order, fast delivery.",
+  keywords: [
+    "custom t-shirt printing Pakistan",
+    "DTF printing Pakistan",
+    "sublimation printing Lahore",
+    "custom mugs Pakistan",
+    "personalized gifts Pakistan",
+    "cricket fan merchandise Pakistan",
+  ],
+  openGraph: {
+    siteName: "Perfect Prints",
+    type: "website",
+    locale: "en_PK",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "Perfect Prints",
+    url: "https://perfectprints.pk",
+    description:
+      "Custom T-shirt, DTF, sublimation & personalized gift printing based in Lahore, Pakistan.",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Lahore",
+      addressCountry: "PK",
+    },
+    priceRange: "PKR",
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <Script
           id="meta-pixel"
           strategy="afterInteractive"
