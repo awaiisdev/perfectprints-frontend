@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,      // cache images 30 days
     remotePatterns: [
       { protocol: "https", hostname: "perfectprints.pk" },
+      { protocol: "https", hostname: "www.perfectprints.pk" },
+      { protocol: "https", hostname: "darkgreen-sardine-406947.hostingersite.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],

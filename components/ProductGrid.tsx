@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { getProducts } from "@/lib/woocommerce";
 
 const TABS = [
@@ -129,11 +130,12 @@ export default function ProductGrid() {
                           )}
 
                           {img ? (
-                            <img
+                            <Image
                               src={img}
                               alt={product.name}
-                              loading="lazy"
-                              className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-all duration-500 scale-100 group-hover:scale-105"
+                              fill
+                              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                              className="object-cover opacity-95 group-hover:opacity-100 transition-all duration-500 scale-100 group-hover:scale-105"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-700 text-xs uppercase tracking-widest">

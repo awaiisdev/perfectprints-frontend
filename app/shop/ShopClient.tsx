@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { getProducts, getCategories } from "@/lib/woocommerce";
 import { useSearchParams } from "next/navigation";
@@ -112,11 +113,12 @@ function ShopContent() {
                 <Link key={product.id} href={`/product/${product.id}`} className="group block">
                   <div className="relative overflow-hidden bg-neutral-50 dark:bg-[#0f0f11] border border-black/10 dark:border-white/10 aspect-square mb-3">
                     {img ? (
-                      <img
+                      <Image
                         src={img}
                         alt={product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-700 text-xs uppercase tracking-widest">

@@ -3,30 +3,54 @@ import React from "react";
 import Link from "next/link";
 
 export default function AboutPage() {
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Perfect Prints",
+    url: "https://perfectprints.pk",
+    foundingDate: "2020",
+    foundingLocation: "Lahore, Punjab, Pakistan",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Mian Ichra Bazar, Street No 4",
+      addressLocality: "Lahore",
+      addressRegion: "Punjab",
+      addressCountry: "PK",
+    },
+    telephone: "+92-301-0148055",
+    description:
+      "Perfect Prints is a custom print-on-demand brand founded in 2020 in Lahore, Pakistan, specializing in DTF and sublimation printing for custom t-shirts, mugs, keychains, and personalized gifts, with delivery across Pakistan.",
+  };
+
   return (
     <main className="bg-black text-white min-h-screen py-16 px-4 sm:px-6 md:px-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
       <div className="max-w-4xl mx-auto space-y-16 sm:space-y-20">
 
         <div className="border-b border-[#1a1a1c] pb-12 sm:pb-16">
-          <span className="text-[10px] tracking-[0.4em] text-[#88888f] uppercase block mb-4">Our Story</span>
+          <span className="text-[10px] tracking-[0.4em] text-[#88888f] uppercase block mb-4">Our Story · Since 2020</span>
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6 sm:mb-8">
             BUILT IN<br />LAHORE.<br />MADE FOR<br />PAKISTAN.
           </h1>
           <p className="text-neutral-400 text-base sm:text-lg leading-relaxed max-w-2xl">
-            Perfect Prints Lahore ke dil — Mian Ichra Bazar — se shuru hua ek simple vision ke saath: Pakistan mein premium quality custom printing accessible banana.
+            Perfect Prints ki shuruat 2020 mein hui, Lahore ke dil — Mian Ichra Bazar — se, ek simple vision ke saath: Pakistan mein premium quality custom printing accessible banana.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-10 md:gap-16">
           <div className="space-y-6">
             <h2 className="text-2xl font-black uppercase tracking-tight">Hamara Mission</h2>
-            <p className="text-neutral-400 leading-relaxed">Hum believe karte hain ke har business, har individual deserves karta hai professional quality printing — chahe order 1 piece ka ho ya 10,000 ka. DTF printing, sublimation, custom t-shirts, mugs, keychains — hum sab kuch offer karte hain ek hi jagah se.</p>
+            <p className="text-neutral-400 leading-relaxed">2020 se hum believe karte hain ke har business, har individual deserves karta hai professional quality printing — chahe order 1 piece ka ho ya 10,000 ka. DTF printing, sublimation, custom t-shirts, mugs, keychains — hum sab kuch offer karte hain ek hi jagah se.</p>
             <p className="text-neutral-400 leading-relaxed">Lahore se poore Pakistan mein delivery. 2-3 business days mein aapke ghar tak.</p>
           </div>
           <div className="space-y-6">
             <h2 className="text-2xl font-black uppercase tracking-tight">Kyun Perfect Prints?</h2>
             <ul className="space-y-3 text-neutral-400">
               {[
+                "Lahore based, 2020 se operational",
                 "Premium DTF & Sublimation printing technology",
                 "Minimum order flexibility — 1 piece se bulk tak",
                 "Pakistan-wide delivery in 2-3 business days",
@@ -45,10 +69,10 @@ export default function AboutPage() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 border-y border-[#1a1a1c] py-12 sm:py-16">
           {[
+            { number: "2020", label: "Founded In" },
             { number: "5000+", label: "Happy Customers" },
             { number: "50+", label: "Product Categories" },
             { number: "2-3", label: "Days Delivery" },
-            { number: "100%", label: "Quality Guarantee" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="text-3xl sm:text-4xl font-black text-white mb-2">{stat.number}</p>
