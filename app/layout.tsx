@@ -6,6 +6,7 @@ import { CartProvider } from "@/lib/CartContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NavHeader from "@/components/NavHeader";
 import CinematicFooter from "@/components/CinematicFooter";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import Script from "next/script";
 
 const inter = Inter({
@@ -102,6 +103,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <NavHeader />
             <main className="flex-grow">{children}</main>
             <CinematicFooter />
+            <WhatsAppButton />
           </CartProvider>
         </ThemeProvider>
       </body>
