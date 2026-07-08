@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],   // serve AVIF first, WebP fallback
     minimumCacheTTL: 60 * 60 * 24 * 30,      // cache images 30 days
+    imageSizes: [100, 400, 800],             // matches widths used in lib/image.ts optimizedSrc()
     remotePatterns: [
       { protocol: "https", hostname: "perfectprints.pk" },
       { protocol: "https", hostname: "www.perfectprints.pk" },
