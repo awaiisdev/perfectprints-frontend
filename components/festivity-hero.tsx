@@ -37,7 +37,7 @@ export function AiHeroBackground() {
     composer.addPass(bloom);
     composer.addPass(rgbShift);
 
-    const COLS = 120, ROWS = 120, SPACING = 0.6, JITTER = 0.3, DOT_R = 0.03, HEX = 0.5;
+    const COLS = 50, ROWS = 50, SPACING = 1.4, JITTER = 0.3, DOT_R = 0.03, HEX = 0.5;
     const total = COLS * ROWS;
     const geometry = new THREE.CircleGeometry(DOT_R, 8);
     const material = new THREE.MeshBasicMaterial({ color: 0x111111 });

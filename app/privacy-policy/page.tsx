@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "How Perfect Prints collects, uses & protects your information when you order custom printing products from perfectprints.pk in Pakistan.",
+  alternates: { canonical: "/privacy-policy" },
+};
+
 export default function PrivacyPolicyPage() {
   return (
     <main className="bg-black text-white min-h-screen py-24 px-6 md:px-16">

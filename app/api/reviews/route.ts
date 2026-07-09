@@ -6,6 +6,14 @@ const SECRET = process.env.WC_CONSUMER_SECRET;
 const CLOUD_NAME = "db8fp3as7";
 const CLOUD_UPLOAD_PRESET = "pp_reviews";
 
+// IMPORTANT: WordPress strips HTML comments (<!-- -->) from comment/review
+// content for security reasons before saving. That was the bug — images
+// were being encoded as an HTML comment, so WordPress deleted them before
+// they were ever stored. Using a plain-text marker (no angle brackets)
+// avoids this, since it isn't recognized as HTML and is left untouched.
+const IMAGE_MARKER_START = "%%IMAGES:";
+const IMAGE_MARKER_END = "%%";
+
 async function uploadToCloudinary(base64: string): Promise<string | null> {
   try {
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
@@ -33,15 +41,33 @@ export async function GET(req: Request) {
   const data = await res.json();
   if (!Array.isArray(data)) return NextResponse.json([]);
 
-  // Parse images from review text if stored as JSON at end
+  // Parse images from review text using the plain-text marker
   const reviews = data.map((r: any) => {
     let reviewText = r.review || "";
     let images: string[] = [];
-    const match = reviewText.match(/<!--IMAGES:(.*?)-->/);
-    if (match) {
-      try { images = JSON.parse(match[1]); } catch {}
+
+    const startIdx = reviewText.indexOf(IMAGE_MARKER_START);
+    if (startIdx !== -1) {
+      const endIdx = reviewText.indexOf(IMAGE_MARKER_END, startIdx + IMAGE_MARKER_START.length);
+      if (endIdx !== -1) {
+        const jsonStr = reviewText.slice(startIdx + IMAGE_MARKER_START.length, endIdx);
+        try { images = JSON.parse(jsonStr); } catch {}
+        reviewText = (
+          reviewText.slice(0, startIdx) +
+          reviewText.slice(endIdx + IMAGE_MARKER_END.length)
+        ).trim();
+      }
+    }
+
+    // Backward compatibility: old reviews saved before this fix used an
+    // HTML comment marker. WordPress likely stripped it, so nothing to
+    // recover there — but this keeps old plain-text-surviving cases safe.
+    const legacyMatch = reviewText.match(/<!--IMAGES:(.*?)-->/);
+    if (legacyMatch) {
+      try { images = JSON.parse(legacyMatch[1]); } catch {}
       reviewText = reviewText.replace(/<!--IMAGES:(.*?)-->/, "").trim();
     }
+
     return { ...r, review: reviewText, review_images: images };
   });
 
@@ -62,9 +88,10 @@ export async function POST(req: Request) {
       imageUrls = uploads.filter(Boolean) as string[];
     }
 
-    // Store images as hidden comment in review text
+    // Store images using the plain-text marker (safe from WordPress's
+    // HTML-comment-stripping behavior)
     const reviewText = imageUrls.length > 0
-      ? `${review}<!--IMAGES:${JSON.stringify(imageUrls)}-->`
+      ? `${review}${IMAGE_MARKER_START}${JSON.stringify(imageUrls)}${IMAGE_MARKER_END}`
       : review;
 
     const reviewData = {

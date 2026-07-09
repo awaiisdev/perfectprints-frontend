@@ -5,7 +5,7 @@ import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NavHeader from "@/components/NavHeader";
-import CinematicFooter from "@/components/CinematicFooter";
+import CinematicFooter from "@/components/DeferredFooter";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Script from "next/script";
 
@@ -97,7 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.variable} ${montserrat.variable} antialiased`}>
+      <body className={`${inter.variable} ${montserrat.variable} antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <CartProvider>
             <NavHeader />

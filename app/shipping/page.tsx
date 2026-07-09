@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Shipping & Delivery",
+  description:
+    "Perfect Prints delivery info — 2-3 day standard delivery Pakistan-wide, same-day Lahore delivery, free shipping on bulk orders above Rs. 5,000.",
+  alternates: { canonical: "/shipping" },
+};
+
 export default function ShippingPage() {
   return (
     <main className="bg-black text-white min-h-screen py-24 px-6 md:px-16">

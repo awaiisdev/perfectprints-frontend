@@ -1,6 +1,12 @@
-"use client";
-import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "Perfect Prints — Lahore-based custom printing brand since 2020. DTF & sublimation printing for t-shirts, mugs, keychains & personalized gifts, delivered across Pakistan.",
+  alternates: { canonical: "/about" },
+};
 
 export default function AboutPage() {
   const orgJsonLd = {

@@ -6,8 +6,7 @@ import { getProduct, getProducts } from "@/lib/woocommerce";
 import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Share2, Heart, Star, Upload, X, CheckCircle } from "lucide-react";
-import CinematicFooter from "@/components/CinematicFooter";
-import { optimizedSrc } from "@/lib/image";
+import CinematicFooter from "@/components/DeferredFooter";
 
 declare global {
   interface Window { fbq?: (...args: any[]) => void; }
@@ -268,12 +267,12 @@ export default function ProductClient() {
         <div className="grid md:grid-cols-2 gap-10 md:gap-16 mb-24">
 
           {/* LEFT: IMAGE GALLERY */}
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0">
             <div className="relative w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 overflow-hidden group">
               <AnimatePresence mode="wait">
                 <motion.img
                   key={selectedImage}
-                  src={optimizedSrc(images[selectedImage]?.src, 800)}
+                  src={images[selectedImage]?.src}
                   alt={product.name}
                   initial={{ opacity: 0, scale: 1.02 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -300,7 +299,7 @@ export default function ProductClient() {
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {images.map((img: any, i: number) => (
                   <button key={i} onClick={() => setSelectedImage(i)} className={`flex-shrink-0 w-16 h-20 border-2 overflow-hidden transition-all ${selectedImage === i ? "border-black dark:border-white" : "border-transparent opacity-50 hover:opacity-80"}`}>
-                    <img src={optimizedSrc(img.src, 100)} alt="" className="w-full h-full object-cover" />
+                    <img src={img.src} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -308,7 +307,7 @@ export default function ProductClient() {
           </div>
 
           {/* RIGHT: PRODUCT INFO */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 min-w-0">
             {product.categories?.[0] && (
               <span className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 font-black" style={{ fontFamily: "var(--font-inter)" }}>{product.categories[0].name}</span>
             )}
@@ -331,6 +330,13 @@ export default function ProductClient() {
                 </span>
               </button>
             )}
+
+            {/* Trust Badge — real customer count */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 bg-green-50 dark:bg-green-950/30 border border-green-600/20 text-green-700 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full" style={{ fontFamily: "var(--font-inter)" }}>
+                ✓ 2000+ Happy Customers Across Pakistan
+              </span>
+            </div>
 
             <div>
               <p className="text-[10px] uppercase tracking-widest text-neutral-400 mb-1" style={{ fontFamily: "var(--font-inter)" }}>Price</p>
@@ -492,7 +498,7 @@ export default function ProductClient() {
                 {[...relatedProducts, ...relatedProducts].map((rel, i) => (
                   <div key={i} className="cursor-pointer group flex-shrink-0 pr-3" style={{ width: "calc((100vw - 8rem) / 5)" }} onClick={() => router.push(`/product/${rel.id}`)}>
                     <div className="w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-2 overflow-hidden">
-                      {rel.images?.[0]?.src ? <img src={optimizedSrc(rel.images[0].src, 400)} alt={rel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs uppercase">No Image</div>}
+                      {rel.images?.[0]?.src ? <img src={rel.images[0].src} alt={rel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs uppercase">No Image</div>}
                     </div>
                     <p className="text-[11px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: rel.name }} />
                     <p className="text-[11px] text-neutral-400 mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>PKR {parseFloat(rel.price || "0").toLocaleString()}</p>
@@ -509,7 +515,7 @@ export default function ProductClient() {
                   {[...relatedProducts.slice(0, Math.ceil(relatedProducts.length / 2)), ...relatedProducts.slice(0, Math.ceil(relatedProducts.length / 2))].map((rel, i) => (
                     <div key={i} className="cursor-pointer group flex-shrink-0 pr-2" style={{ width: "calc((100vw - 2rem) / 2.5)" }} onClick={() => router.push(`/product/${rel.id}`)}>
                       <div className="w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-1.5 overflow-hidden">
-                        {rel.images?.[0]?.src ? <img src={optimizedSrc(rel.images[0].src, 400)} alt={rel.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs">No Image</div>}
+                        {rel.images?.[0]?.src ? <img src={rel.images[0].src} alt={rel.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs">No Image</div>}
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: rel.name }} />
                       <p className="text-[10px] text-neutral-400 mt-0.5">PKR {parseFloat(rel.price || "0").toLocaleString()}</p>
@@ -523,7 +529,7 @@ export default function ProductClient() {
                   {[...relatedProducts.slice(Math.ceil(relatedProducts.length / 2)), ...relatedProducts.slice(Math.ceil(relatedProducts.length / 2))].map((rel, i) => (
                     <div key={i} className="cursor-pointer group flex-shrink-0 pr-2" style={{ width: "calc((100vw - 2rem) / 2.5)" }} onClick={() => router.push(`/product/${rel.id}`)}>
                       <div className="w-full aspect-square bg-neutral-100 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 mb-1.5 overflow-hidden">
-                        {rel.images?.[0]?.src ? <img src={optimizedSrc(rel.images[0].src, 400)} alt={rel.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs">No Image</div>}
+                        {rel.images?.[0]?.src ? <img src={rel.images[0].src} alt={rel.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-neutral-300 text-xs">No Image</div>}
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-tight text-black dark:text-white line-clamp-2 leading-tight" style={{ fontFamily: "var(--font-montserrat)" }} dangerouslySetInnerHTML={{ __html: rel.name }} />
                       <p className="text-[10px] text-neutral-400 mt-0.5">PKR {parseFloat(rel.price || "0").toLocaleString()}</p>

@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
+  description:
+    "Perfect Prints terms & conditions — orders, payment, production, delivery, returns, refunds & cancellation policy for custom printing in Pakistan.",
+  alternates: { canonical: "/terms" },
+};
+
 export default function TermsPage() {
   return (
     <main className="bg-black text-white min-h-screen py-24 px-6 md:px-16">
