@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Share2, Heart, Star, Upload, X, CheckCircle } from "lucide-react";
 import CinematicFooter from "@/components/DeferredFooter";
 import dynamic from "next/dynamic";
+const DesignGuideModal = dynamic(() => import("@/components/DesignGuideModal"), { ssr: false });
 const DesignPicker = dynamic(() => import("@/components/DesignPicker"), {
   ssr: false,
   loading: () => (
@@ -43,6 +44,30 @@ export default function ProductClient() {
   const [added, setAdded]                   = useState(false);
   const [wished, setWished]                 = useState(false);
   const [currentPrice, setCurrentPrice]     = useState<string>("");
+  const [designPickerOpen, setDesignPickerOpen] = useState(false);
+  const [showProductGuide, setShowProductGuide] = useState(false);
+
+  // Warm up the design-picker code in the background once the page has
+  // settled (after first paint, during browser idle time) so that when the
+  // customer actually taps "Banayein", it opens instantly instead of
+  // downloading its JS chunk at that moment. Uses optional chaining because
+  // `product` may still be null on the very first render.
+  useEffect(() => {
+    if (!product?.pp_design_picker) return;
+    const warm = () => { import("@/components/DesignPicker"); };
+    type IdleWindow = Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const w = window as IdleWindow;
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(warm, { timeout: 3000 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(warm, 1500);
+    return () => clearTimeout(t);
+  }, [product?.pp_design_picker]);
+
 
   // ── Custom Order fields (up to 2 photos + 2 names, labels set in WP admin) ──
   const [customValues, setCustomValues]     = useState<Record<string, string>>({});
@@ -192,27 +217,6 @@ export default function ProductClient() {
   // that single finished image through the same /api/custom-upload route —
   // so everything downstream (cart, checkout, order meta) works unchanged.
   const isDesignPicker = !!product.pp_design_picker;
-  const [designPickerOpen, setDesignPickerOpen] = useState(false);
-
-  // Warm up the design-picker code in the background once the page has
-  // settled (after first paint, during browser idle time) so that when the
-  // customer actually taps "Banayein", it opens instantly instead of
-  // downloading its JS chunk at that moment.
-  useEffect(() => {
-    if (!isDesignPicker) return;
-    const warm = () => { import("@/components/DesignPicker"); };
-    type IdleWindow = Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    const w = window as IdleWindow;
-    if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(warm, { timeout: 3000 });
-      return () => w.cancelIdleCallback?.(id);
-    }
-    const t = setTimeout(warm, 1500);
-    return () => clearTimeout(t);
-  }, [isDesignPicker]);
 
   const customFieldDefs: { key: string; type: "name" | "photo"; label: string }[] = isDesignPicker
     ? [{ key: "design_image", type: "photo" as const, label: "14 August Design" }]
@@ -418,16 +422,36 @@ export default function ProductClient() {
                   }}
                 />
               ) : (
-                <button
-                  onClick={() => setDesignPickerOpen(true)}
-                  onMouseEnter={() => { import("@/components/DesignPicker"); }}
-                  onTouchStart={() => { import("@/components/DesignPicker"); }}
-                  className="w-full flex items-center justify-center gap-2 border border-black/20 dark:border-white/20 py-4 text-[11px] uppercase tracking-widest font-bold text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
-                >
-                  🇵🇰 Apna 14 August Design Banayein
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setDesignPickerOpen(true)}
+                    onMouseEnter={() => { import("@/components/DesignPicker"); }}
+                    onTouchStart={() => { import("@/components/DesignPicker"); }}
+                    className="w-full flex items-center justify-center gap-2 border border-black/20 dark:border-white/20 py-4 text-[11px] uppercase tracking-widest font-bold text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                  >
+                    🇵🇰 Apna 14 August Design Banayein
+                  </button>
+                  <button
+                    onClick={() => setShowProductGuide(true)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-black dark:text-white underline animate-guide-shake"
+                  >
+                    📖 Guide Dekhein
+                  </button>
+                  <style jsx>{`
+                    @keyframes guide-shake {
+                      0%, 88%, 100% { transform: translateX(0); }
+                      90% { transform: translateX(-3px); }
+                      92% { transform: translateX(3px); }
+                      94% { transform: translateX(-3px); }
+                      96% { transform: translateX(2px); }
+                      98% { transform: translateX(0); }
+                    }
+                    .animate-guide-shake { animation: guide-shake 3.5s ease-in-out infinite; }
+                  `}</style>
+                </div>
               )
             )}
+            {showProductGuide && <DesignGuideModal onClose={() => setShowProductGuide(false)} />}
 
             {isCustomOrder && !isDesignPicker && (
               <div className="border border-black/10 dark:border-white/10 p-5 space-y-4 bg-neutral-50 dark:bg-[#0a0a0a]">

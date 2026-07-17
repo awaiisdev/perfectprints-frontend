@@ -112,6 +112,48 @@ function drawName(ctx: CanvasRenderingContext2D, name: string, d: DesignDef, fon
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Urdu step-by-step guide — shown the first time the tool opens
+// ─────────────────────────────────────────────────────────────────────────
+
+function GuideModal({ onClose }: { onClose: () => void }) {
+  const steps = [
+    { num: 1, icon: "📷", title: "Photo Upload Karein", desc: "بچے کی تصویر اپلوڈ کریں (نام لکھنا اختیاری ہے)۔" },
+    { num: 2, icon: "🖼️", title: "Design Chunein", desc: "آپ کی تصویر خودبخود ہر ڈیزائن پر پیش نظر آئے گی — جو ڈیزائن پسند آئے اس پر ٹیپ کریں۔" },
+    { num: 3, icon: "🔍✋", title: "Adjust Karein", desc: "زوم اور اوپر نیچے، دائیں بائیں کے سلائیڈرز سے تصویر کی جگہ ٹھیک کریں۔" },
+    { num: 4, icon: "✅", title: "Confirm Karein", desc: "\"Confirm Design\" دبائیں — تیار شدہ ڈیزائن خودبخود محفوظ ہو جائے گا اور آپ آرڈر مکمل کر سکتے ہیں۔" },
+  ];
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[999] p-4">
+      <div className="bg-white dark:bg-[#0a0a0a] max-w-sm w-full max-h-[85vh] overflow-y-auto p-5 rounded-lg space-y-3">
+        <div className="text-center space-y-1">
+          <div className="text-2xl">🇵🇰</div>
+          <p className="text-[11px] font-black uppercase tracking-widest text-black dark:text-white">Istemal Ka Tareeqa</p>
+          <p className="text-[10px] text-neutral-400">4 asaan steps</p>
+        </div>
+        {steps.map((s) => (
+          <div key={s.num} className="flex gap-3 bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 border border-black/5 dark:border-white/5">
+            <div className="shrink-0 w-7 h-7 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-xs font-bold">
+              {s.num}
+            </div>
+            <div className="flex-1">
+              <div className="text-lg leading-none mb-1">{s.icon}</div>
+              <div className="text-[11px] font-bold text-black dark:text-white">{s.title}</div>
+              <div dir="rtl" className="text-[11px] text-neutral-500 mt-1 leading-relaxed">{s.desc}</div>
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={onClose}
+          className="w-full py-3 text-[11px] uppercase tracking-widest font-bold bg-black text-white dark:bg-white dark:text-black"
+        >
+          Shuru Karein
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Gallery thumbnail — draws a live low-res preview of photo+name on a design
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -166,6 +208,7 @@ function DesignThumb({ design, photoImg, name, adjust, onClick, selected, fontCs
 
 export default function DesignPicker({ onComplete }: { onComplete: (url: string, previewDataUrl: string) => void }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [showGuide, setShowGuide] = useState(true);
   const [name, setName] = useState("");
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -297,20 +340,37 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
   };
 
   // ── Confirm: bake final image, upload via existing WordPress media route ──
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const handleConfirm = async () => {
     setUploading(true);
+    setUploadProgress(0);
     setUploadError(null);
     try {
-      await ensureNameFontsLoaded();
+      // Only worth waiting for name-fonts if the design actually has a name
+      // on it — photo-only designs shouldn't pay this cost at all.
+      if (name && selectedDesign?.nx !== undefined) {
+        await ensureNameFontsLoaded();
+      }
       const canvas = renderFullResolution();
       if (!canvas || !selectedDesign) { setUploading(false); return; }
       const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-      const res = await fetch("/api/custom-upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: dataUrl }),
+
+      const data = await new Promise<{ success: boolean; url?: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/custom-upload");
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        };
+        xhr.onload = () => {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { reject(new Error("bad response")); }
+        };
+        xhr.onerror = () => reject(new Error("network error"));
+        xhr.send(JSON.stringify({ image: dataUrl }));
       });
-      const data = await res.json();
+
       if (data.success && data.url) {
         setConfirmedUrl(data.url);
         onComplete(data.url, dataUrl);
@@ -348,9 +408,19 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
 
   return (
     <div className="border border-black/10 dark:border-white/10 p-5 bg-neutral-50 dark:bg-[#0a0a0a] space-y-4" style={fontFamily}>
-      <p className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white">
-        🇵🇰 14 August Design Banayein
-      </p>
+      {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white">
+          🇵🇰 14 August Design Banayein
+        </p>
+        <button
+          onClick={() => setShowGuide(true)}
+          className="w-6 h-6 rounded-full border border-black/20 dark:border-white/20 text-[10px] text-black dark:text-white flex items-center justify-center shrink-0"
+          aria-label="Guide dekhein"
+        >
+          ?
+        </button>
+      </div>
 
       {step === 1 && (
         <div className="space-y-4">
@@ -476,7 +546,7 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
               disabled={uploading}
               className="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold bg-black text-white dark:bg-white dark:text-black flex items-center justify-center gap-1.5 disabled:opacity-60"
             >
-              {uploading ? (<><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>) : "✓ Confirm Design"}
+              {uploading ? (<><Loader2 className="w-3 h-3 animate-spin" /> Save ho raha hai {uploadProgress > 0 ? `${uploadProgress}%` : "..."}</>) : "✓ Confirm Design"}
             </button>
           </div>
         </div>
