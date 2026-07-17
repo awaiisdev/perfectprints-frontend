@@ -63,20 +63,46 @@ function drawCovered(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: nu
   ctx.drawImage(img, drawX, drawY, drawW, drawH);
 }
 
-function drawName(ctx: CanvasRenderingContext2D, name: string, d: DesignDef, fontScale = 1) {
+// A small, print-friendly set of display fonts for the customer's name.
+// Loaded on demand (only once the picker actually opens) so regular
+// product pages never pay for these fonts.
+export const NAME_FONTS = [
+  { id: "poppins", label: "Classic", css: "'Poppins','Inter',sans-serif", weight: "600" },
+  { id: "bebas", label: "Bold", css: "'Bebas Neue',sans-serif", weight: "400" },
+  { id: "anton", label: "Chunky", css: "'Anton',sans-serif", weight: "400" },
+  { id: "passion", label: "Elegant", css: "'Passion One',cursive", weight: "700" },
+  { id: "marker", label: "Marker", css: "'Permanent Marker',cursive", weight: "400" },
+  { id: "lobster", label: "Script", css: "'Lobster',cursive", weight: "400" },
+];
+
+let fontsInjected = false;
+function ensureNameFontsLoaded(): Promise<void> {
+  if (typeof document === "undefined") return Promise.resolve();
+  if (!fontsInjected) {
+    fontsInjected = true;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Passion+One:wght@700&family=Permanent+Marker&family=Lobster&display=swap";
+    document.head.appendChild(link);
+  }
+  const specs = ["400 60px 'Bebas Neue'", "400 60px 'Anton'", "700 60px 'Passion One'", "400 60px 'Permanent Marker'", "400 60px 'Lobster'"];
+  return Promise.all(specs.map((s) => document.fonts.load(s).catch(() => {}))).then(() => undefined);
+}
+
+function drawName(ctx: CanvasRenderingContext2D, name: string, d: DesignDef, fontScale = 1, fontCss = "'Poppins','Inter',sans-serif", fontWeight = "600") {
   if (!name || d.nx === undefined) return;
   ctx.save();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = d.color || "#222";
-  const family = "'Poppins','Inter',sans-serif";
   let fontSize = Math.floor((d.nh || 0) * 0.46 * fontScale);
-  ctx.font = `600 ${fontSize}px ${family}`;
+  ctx.font = `${fontWeight} ${fontSize}px ${fontCss}`;
   const maxTextW = (d.nw || 0) * 0.72;
   let textW = ctx.measureText(name).width;
   while (textW > maxTextW && fontSize > 10) {
     fontSize -= 2;
-    ctx.font = `600 ${fontSize}px ${family}`;
+    ctx.font = `${fontWeight} ${fontSize}px ${fontCss}`;
     textW = ctx.measureText(name).width;
   }
   const cx = (d.nx || 0) + (d.nw || 0) / 2;
@@ -89,9 +115,9 @@ function drawName(ctx: CanvasRenderingContext2D, name: string, d: DesignDef, fon
 // Gallery thumbnail — draws a live low-res preview of photo+name on a design
 // ─────────────────────────────────────────────────────────────────────────
 
-function DesignThumb({ design, photoImg, name, adjust, onClick, selected }: {
+function DesignThumb({ design, photoImg, name, adjust, onClick, selected, fontCss, fontWeight }: {
   design: DesignDef; photoImg: HTMLImageElement | null; name: string;
-  adjust: Adjust; onClick: () => void; selected: boolean;
+  adjust: Adjust; onClick: () => void; selected: boolean; fontCss: string; fontWeight: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bgImg = useImageLoader(design.thumb);
@@ -117,9 +143,9 @@ function DesignThumb({ design, photoImg, name, adjust, onClick, selected }: {
       ctx.restore();
     }
     if (name && design.type !== "photo_only" && design.nx !== undefined) {
-      drawName(ctx, name, { ...design, nx: design.nx! * scaleF, ny: design.ny! * scaleF, nw: design.nw! * scaleF, nh: design.nh! * scaleF }, adjust.fontScale);
+      drawName(ctx, name, { ...design, nx: design.nx! * scaleF, ny: design.ny! * scaleF, nw: design.nw! * scaleF, nh: design.nh! * scaleF }, adjust.fontScale, fontCss, fontWeight);
     }
-  }, [bgImg, photoImg, name, adjust, design]);
+  }, [bgImg, photoImg, name, adjust, design, fontCss, fontWeight]);
 
   return (
     <button
@@ -145,6 +171,15 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [adjustments, setAdjustments] = useState<Record<string, Adjust>>({});
   const [uploading, setUploading] = useState(false);
+  const [fontId, setFontId] = useState(NAME_FONTS[0].id);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const selectedFont = NAME_FONTS.find((f) => f.id === fontId) || NAME_FONTS[0];
+
+  useEffect(() => {
+    let cancelled = false;
+    ensureNameFontsLoaded().then(() => { if (!cancelled) setFontsLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [confirmedUrl, setConfirmedUrl] = useState<string | null>(null);
 
@@ -208,9 +243,9 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
       ctx.restore();
     }
     if (name && selectedDesign.type !== "photo_only" && selectedDesign.nx !== undefined) {
-      drawName(ctx, name, { ...selectedDesign, nx: selectedDesign.nx * scaleF, ny: selectedDesign.ny! * scaleF, nw: selectedDesign.nw! * scaleF, nh: selectedDesign.nh! * scaleF }, adj.fontScale);
+      drawName(ctx, name, { ...selectedDesign, nx: selectedDesign.nx * scaleF, ny: selectedDesign.ny! * scaleF, nw: selectedDesign.nw! * scaleF, nh: selectedDesign.nh! * scaleF }, adj.fontScale, selectedFont.css, selectedFont.weight);
     }
-  }, [selectedDesign, bgImg, photoImg, name, getAdjust]);
+  }, [selectedDesign, bgImg, photoImg, name, getAdjust, selectedFont]);
 
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
@@ -235,10 +270,10 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
       ctx.restore();
     }
     if (name && selectedDesign.type !== "photo_only" && selectedDesign.nx !== undefined) {
-      drawName(ctx, name, selectedDesign, adj.fontScale);
+      drawName(ctx, name, selectedDesign, adj.fontScale, selectedFont.css, selectedFont.weight);
     }
     return off;
-  }, [selectedDesign, bgImg, photoImg, name, getAdjust]);
+  }, [selectedDesign, bgImg, photoImg, name, getAdjust, selectedFont]);
 
   const handleZoom = (val: number) => {
     if (!selectedDesign) return;
@@ -252,6 +287,10 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
     if (!selectedDesign) return;
     setAdjustments((prev) => ({ ...prev, [selectedDesign.id]: { ...getAdjust(selectedDesign.id), ox: val } }));
   };
+  const handleFontSize = (val: number) => {
+    if (!selectedDesign) return;
+    setAdjustments((prev) => ({ ...prev, [selectedDesign.id]: { ...getAdjust(selectedDesign.id), fontScale: val / 100 } }));
+  };
   const handleResetAdjust = () => {
     if (!selectedDesign) return;
     setAdjustments((prev) => ({ ...prev, [selectedDesign.id]: { scale: 1, ox: 0, oy: 0, fontScale: 1 } }));
@@ -259,11 +298,12 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
 
   // ── Confirm: bake final image, upload via existing WordPress media route ──
   const handleConfirm = async () => {
-    const canvas = renderFullResolution();
-    if (!canvas || !selectedDesign) return;
     setUploading(true);
     setUploadError(null);
     try {
+      await ensureNameFontsLoaded();
+      const canvas = renderFullResolution();
+      if (!canvas || !selectedDesign) { setUploading(false); return; }
       const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
       const res = await fetch("/api/custom-upload", {
         method: "POST",
@@ -358,6 +398,8 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
                 name={name}
                 adjust={getAdjust(d.id)}
                 selected={selectedId === d.id}
+                fontCss={selectedFont.css}
+                fontWeight={selectedFont.weight}
                 onClick={() => { setSelectedId(d.id); setStep(3); }}
               />
             ))}
@@ -390,6 +432,36 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
                 <input type="range" min={-Math.round(selectedDesign.pw * 0.7)} max={Math.round(selectedDesign.pw * 0.7)} value={Math.round(getAdjust(selectedDesign.id).ox || 0)} onChange={(e) => handleHorizontalPos(Number(e.target.value))} className="flex-1" />
               </div>
               <p className="text-[9px] text-neutral-400 text-center">Sliders se photo set karein — screen ko chune se photo nahi hilegi</p>
+            </div>
+          )}
+
+          {name && selectedDesign.type !== "photo_only" && selectedDesign.nx !== undefined && (
+            <div className="max-w-[280px] mx-auto space-y-2">
+              <p className="text-[9px] uppercase tracking-widest text-neutral-400 text-center">
+                Naam Ka Style {!fontsLoaded && "(loading...)"}
+              </p>
+              <div className={`flex flex-wrap gap-1.5 justify-center transition-opacity ${fontsLoaded ? "opacity-100" : "opacity-50"}`}>
+                {NAME_FONTS.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFontId(f.id)}
+                    style={{ fontFamily: f.css, fontWeight: f.weight as React.CSSProperties["fontWeight"] }}
+                    className={`px-3 py-1.5 text-xs rounded border transition-all ${fontId === f.id ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white" : "border-black/15 dark:border-white/15 text-black dark:text-white"}`}
+                  >
+                    {name.slice(0, 8) || f.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded px-3 py-2">
+                <span className="text-sm">🔤</span>
+                <input
+                  type="range" min={50} max={180}
+                  value={Math.round((getAdjust(selectedDesign.id).fontScale || 1) * 100)}
+                  onChange={(e) => handleFontSize(Number(e.target.value))}
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-[9px] text-neutral-400 text-center">Slider se naam chota/bara karein</p>
             </div>
           )}
 

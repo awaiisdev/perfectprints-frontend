@@ -7,7 +7,16 @@ import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Share2, Heart, Star, Upload, X, CheckCircle } from "lucide-react";
 import CinematicFooter from "@/components/DeferredFooter";
-import DesignPicker from "@/components/DesignPicker";
+import dynamic from "next/dynamic";
+const DesignPicker = dynamic(() => import("@/components/DesignPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center gap-2 border border-black/10 dark:border-white/10 p-6 bg-neutral-50 dark:bg-[#0a0a0a] text-[10px] uppercase tracking-widest text-neutral-400">
+      <span className="w-3 h-3 border-2 border-neutral-300 border-t-black dark:border-t-white rounded-full animate-spin" />
+      Loading…
+    </div>
+  ),
+});
 
 declare global {
   interface Window { fbq?: (...args: any[]) => void; }
@@ -183,6 +192,27 @@ export default function ProductClient() {
   // that single finished image through the same /api/custom-upload route —
   // so everything downstream (cart, checkout, order meta) works unchanged.
   const isDesignPicker = !!product.pp_design_picker;
+  const [designPickerOpen, setDesignPickerOpen] = useState(false);
+
+  // Warm up the design-picker code in the background once the page has
+  // settled (after first paint, during browser idle time) so that when the
+  // customer actually taps "Banayein", it opens instantly instead of
+  // downloading its JS chunk at that moment.
+  useEffect(() => {
+    if (!isDesignPicker) return;
+    const warm = () => { import("@/components/DesignPicker"); };
+    type IdleWindow = Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const w = window as IdleWindow;
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(warm, { timeout: 3000 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(warm, 1500);
+    return () => clearTimeout(t);
+  }, [isDesignPicker]);
 
   const customFieldDefs: { key: string; type: "name" | "photo"; label: string }[] = isDesignPicker
     ? [{ key: "design_image", type: "photo" as const, label: "14 August Design" }]
@@ -380,12 +410,23 @@ export default function ProductClient() {
 
             {/* ── CUSTOM ORDER FIELDS ── */}
             {isCustomOrder && isDesignPicker && (
-              <DesignPicker
-                onComplete={(url, previewDataUrl) => {
-                  setCustomValues((prev) => ({ ...prev, design_image: url }));
-                  setCustomPreviews((prev) => ({ ...prev, design_image: previewDataUrl }));
-                }}
-              />
+              designPickerOpen ? (
+                <DesignPicker
+                  onComplete={(url, previewDataUrl) => {
+                    setCustomValues((prev) => ({ ...prev, design_image: url }));
+                    setCustomPreviews((prev) => ({ ...prev, design_image: previewDataUrl }));
+                  }}
+                />
+              ) : (
+                <button
+                  onClick={() => setDesignPickerOpen(true)}
+                  onMouseEnter={() => { import("@/components/DesignPicker"); }}
+                  onTouchStart={() => { import("@/components/DesignPicker"); }}
+                  className="w-full flex items-center justify-center gap-2 border border-black/20 dark:border-white/20 py-4 text-[11px] uppercase tracking-widest font-bold text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                >
+                  🇵🇰 Apna 14 August Design Banayein
+                </button>
+              )
             )}
 
             {isCustomOrder && !isDesignPicker && (
