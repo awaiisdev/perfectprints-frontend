@@ -7,6 +7,7 @@ import { useCart } from "@/lib/CartContext";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Share2, Heart, Star, Upload, X, CheckCircle } from "lucide-react";
 import CinematicFooter from "@/components/DeferredFooter";
+import DesignPicker from "@/components/DesignPicker";
 
 declare global {
   interface Window { fbq?: (...args: any[]) => void; }
@@ -175,14 +176,24 @@ export default function ProductClient() {
 
   // Custom Order field definitions — driven by labels set in WordPress admin.
   // Empty label = field not used for this product.
-  const customFieldDefs: { key: string; type: "name" | "photo"; label: string }[] = [
-    { key: "name1",  type: "name" as const,  label: product.pp_name1_label  || "" },
-    { key: "name2",  type: "name" as const,  label: product.pp_name2_label  || "" },
-    { key: "photo1", type: "photo" as const, label: product.pp_photo1_label || "" },
-    { key: "photo2", type: "photo" as const, label: product.pp_photo2_label || "" },
-  ].filter((f) => f.label.trim().length > 0);
+  //
+  // Special case: if pp_design_picker is enabled on the product, we swap the
+  // plain "upload a photo" field for the full 14 August design-picker tool.
+  // The tool bakes the customer's photo into the chosen design and uploads
+  // that single finished image through the same /api/custom-upload route —
+  // so everything downstream (cart, checkout, order meta) works unchanged.
+  const isDesignPicker = !!product.pp_design_picker;
 
-  const isCustomOrder = !!product.pp_custom_order && customFieldDefs.length > 0;
+  const customFieldDefs: { key: string; type: "name" | "photo"; label: string }[] = isDesignPicker
+    ? [{ key: "design_image", type: "photo" as const, label: "14 August Design" }]
+    : [
+        { key: "name1",  type: "name" as const,  label: product.pp_name1_label  || "" },
+        { key: "name2",  type: "name" as const,  label: product.pp_name2_label  || "" },
+        { key: "photo1", type: "photo" as const, label: product.pp_photo1_label || "" },
+        { key: "photo2", type: "photo" as const, label: product.pp_photo2_label || "" },
+      ].filter((f) => f.label.trim().length > 0);
+
+  const isCustomOrder = isDesignPicker || (!!product.pp_custom_order && customFieldDefs.length > 0);
   const customFieldsValid =
     !isCustomOrder || customFieldDefs.every((f) => !!customValues[f.key]?.trim());
 
@@ -368,7 +379,16 @@ export default function ProductClient() {
             )}
 
             {/* ── CUSTOM ORDER FIELDS ── */}
-            {isCustomOrder && (
+            {isCustomOrder && isDesignPicker && (
+              <DesignPicker
+                onComplete={(url, previewDataUrl) => {
+                  setCustomValues((prev) => ({ ...prev, design_image: url }));
+                  setCustomPreviews((prev) => ({ ...prev, design_image: previewDataUrl }));
+                }}
+              />
+            )}
+
+            {isCustomOrder && !isDesignPicker && (
               <div className="border border-black/10 dark:border-white/10 p-5 space-y-4 bg-neutral-50 dark:bg-[#0a0a0a]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white" style={{ fontFamily: "var(--font-inter)" }}>
                   ✏️ Customize This Order
