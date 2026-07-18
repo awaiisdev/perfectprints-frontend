@@ -425,6 +425,20 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
       {step === 1 && (
         <div className="space-y-4">
           <div className="space-y-1.5">
+            <p className={labelCls}>Kuch Design Ye Hain</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {DESIGN_LIST.slice(0, 6).map((d) => (
+                <img
+                  key={d.id}
+                  src={d.thumb}
+                  alt=""
+                  className="w-16 h-20 object-cover rounded border border-black/10 dark:border-white/10 shrink-0"
+                />
+              ))}
+            </div>
+            <p className="text-[10px] text-neutral-400">Photo upload karte hi aapki tasveer in sab designs par dikhne lagegi 👇</p>
+          </div>
+          <div className="space-y-1.5">
             <label className={labelCls}>Bache Ka Naam (Optional)</label>
             <input
               value={name}
