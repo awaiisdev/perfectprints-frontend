@@ -192,7 +192,7 @@ function DesignThumb({ design, photoImg, name, adjust, onClick, selected, fontCs
   return (
     <button
       onClick={onClick}
-      className={`relative rounded-lg overflow-hidden border-2 transition-all bg-white ${selected ? "border-black dark:border-white shadow-md" : "border-black/10 dark:border-white/10"}`}
+      className={`relative rounded-xl overflow-hidden border-2 transition-all active:scale-[0.97] bg-white ${selected ? "border-black dark:border-white shadow-md" : "border-black/10 dark:border-white/10"}`}
     >
       <canvas ref={canvasRef} className="w-full block" />
       <span className="absolute top-1.5 right-1.5 bg-black/80 text-white text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full">
@@ -386,6 +386,51 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
 
   const labelCls = "text-[10px] uppercase tracking-widest text-neutral-400";
   const fontFamily = { fontFamily: "var(--font-inter)" };
+  const sliderFill = (val: number, min: number, max: number) =>
+    ({ "--dp-fill": `${Math.round(((val - min) / (max - min)) * 100)}%` } as React.CSSProperties);
+
+  const sliderStyles = (
+    <style jsx global>{`
+      .dp-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        border-radius: 999px;
+        background: linear-gradient(to right, currentColor 0%, currentColor var(--dp-fill, 50%), rgba(128,128,128,0.25) var(--dp-fill, 50%));
+        outline: none;
+        touch-action: pan-y;
+      }
+      .dp-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #000;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        cursor: pointer;
+        margin-top: 0;
+      }
+      .dark .dp-slider::-webkit-slider-thumb {
+        background: #000;
+        border-color: #fff;
+      }
+      .dp-slider::-moz-range-thumb {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #000;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        cursor: pointer;
+      }
+      .dark .dp-slider::-moz-range-thumb {
+        background: #000;
+        border-color: #fff;
+      }
+    `}</style>
+  );
 
   if (confirmedUrl) {
     return (
@@ -408,6 +453,7 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
 
   return (
     <div className="border border-black/10 dark:border-white/10 p-5 bg-neutral-50 dark:bg-[#0a0a0a] space-y-4" style={fontFamily}>
+      {sliderStyles}
       {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white">
@@ -444,24 +490,24 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Ali Khan"
-              className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 p-3 text-sm outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400"
+              className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 px-4 py-3.5 text-base rounded-lg outline-none focus:border-black dark:focus:border-white text-black dark:text-white placeholder:text-neutral-400 transition-colors"
             />
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>Bache Ki Photo *</label>
-            <label className="flex items-center gap-2 cursor-pointer w-fit border border-black/20 dark:border-white/20 px-4 py-2.5 text-[10px] uppercase tracking-widest text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">
-              <Upload className="w-3.5 h-3.5" />
-              {photoDataUrl ? "Change Photo" : "Choose Photo"}
+            <label className="flex items-center justify-center gap-2 cursor-pointer w-full border-2 border-dashed border-black/25 dark:border-white/25 rounded-xl px-4 py-5 text-[11px] uppercase tracking-widest font-bold text-black dark:text-white hover:border-black dark:hover:border-white hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-all active:scale-[0.99]">
+              <Upload className="w-4 h-4" />
+              {photoDataUrl ? "Photo Change Karein" : "Photo Upload Karein"}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
             </label>
             {photoDataUrl && (
-              <img src={photoDataUrl} alt="" className="w-20 h-20 object-cover border border-black/10 dark:border-white/10 mt-2" />
+              <img src={photoDataUrl} alt="" className="w-24 h-24 object-cover rounded-lg border border-black/10 dark:border-white/10 mt-2 shadow-sm" />
             )}
           </div>
           <button
             disabled={!canProceed}
             onClick={() => setStep(2)}
-            className={`w-full py-3 text-[11px] uppercase tracking-widest font-bold transition-all ${canProceed ? "bg-black text-white dark:bg-white dark:text-black hover:opacity-90" : "bg-neutral-200 text-neutral-400 dark:bg-neutral-800 cursor-not-allowed"}`}
+            className={`w-full py-4 rounded-xl text-[12px] uppercase tracking-widest font-bold transition-all active:scale-[0.99] ${canProceed ? "bg-black text-white dark:bg-white dark:text-black hover:opacity-90" : "bg-neutral-200 text-neutral-400 dark:bg-neutral-800 cursor-not-allowed"}`}
           >
             Designs Dekhein →
           </button>
@@ -492,77 +538,111 @@ export default function DesignPicker({ onComplete }: { onComplete: (url: string,
       )}
 
       {step === 3 && selectedDesign && (
-        <div className="space-y-3">
+        <div className="space-y-3 pb-24 md:pb-0">
           <button onClick={() => setStep(2)} className="flex items-center gap-1 text-[10px] uppercase tracking-widest underline text-neutral-500">
             <ChevronLeft className="w-3 h-3" /> Doosra Design Chunein
           </button>
 
-          <div className="max-w-[280px] mx-auto rounded-lg overflow-hidden shadow-md">
-            <canvas ref={editorCanvasRef} className="w-full block" style={{ pointerEvents: "none" }} />
-          </div>
-
-          {photoImg && selectedDesign.type !== "name_only" && (
-            <div className="max-w-[280px] mx-auto space-y-2">
-              <div className="flex items-center gap-2 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded px-3 py-2">
-                <span className="text-sm">🔍</span>
-                <input type="range" min={50} max={300} value={Math.round(getAdjust(selectedDesign.id).scale * 100)} onChange={(e) => handleZoom(Number(e.target.value))} className="flex-1" />
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+            {/* Preview — sticky so it never scrolls out of view while adjusting */}
+            <div className="w-full md:w-[45%] md:sticky md:top-4 sticky top-2 z-10">
+              <div className="max-w-[280px] md:max-w-none mx-auto rounded-xl overflow-hidden shadow-lg ring-1 ring-black/5 dark:ring-white/10 bg-white">
+                <canvas ref={editorCanvasRef} className="w-full block" style={{ pointerEvents: "none" }} />
               </div>
-              <div className="flex items-center gap-2 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded px-3 py-2">
-                <span className="text-sm">⬆️⬇️</span>
-                <input type="range" min={-Math.round(selectedDesign.ph * 0.7)} max={Math.round(selectedDesign.ph * 0.7)} value={Math.round(getAdjust(selectedDesign.id).oy || 0)} onChange={(e) => handleVerticalPos(Number(e.target.value))} className="flex-1" />
-              </div>
-              <div className="flex items-center gap-2 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded px-3 py-2">
-                <span className="text-sm">⬅️➡️</span>
-                <input type="range" min={-Math.round(selectedDesign.pw * 0.7)} max={Math.round(selectedDesign.pw * 0.7)} value={Math.round(getAdjust(selectedDesign.id).ox || 0)} onChange={(e) => handleHorizontalPos(Number(e.target.value))} className="flex-1" />
-              </div>
-              <p className="text-[9px] text-neutral-400 text-center">Sliders se photo set karein — screen ko chune se photo nahi hilegi</p>
             </div>
-          )}
 
-          {name && selectedDesign.type !== "photo_only" && selectedDesign.nx !== undefined && (
-            <div className="max-w-[280px] mx-auto space-y-2">
-              <p className="text-[9px] uppercase tracking-widest text-neutral-400 text-center">
-                Naam Ka Style {!fontsLoaded && "(loading...)"}
-              </p>
-              <div className={`flex flex-wrap gap-1.5 justify-center transition-opacity ${fontsLoaded ? "opacity-100" : "opacity-50"}`}>
-                {NAME_FONTS.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFontId(f.id)}
-                    style={{ fontFamily: f.css, fontWeight: f.weight as React.CSSProperties["fontWeight"] }}
-                    className={`px-3 py-1.5 text-xs rounded border transition-all ${fontId === f.id ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white" : "border-black/15 dark:border-white/15 text-black dark:text-white"}`}
-                  >
-                    {name.slice(0, 8) || f.label}
-                  </button>
-                ))}
+            {/* Controls */}
+            <div className="w-full md:w-[55%] space-y-3">
+              {photoImg && selectedDesign.type !== "name_only" && (
+                <div className="max-w-[280px] md:max-w-none mx-auto space-y-2 bg-white dark:bg-neutral-900 rounded-xl p-3.5 border border-black/8 dark:border-white/10 shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-black dark:text-white">📷 Photo Adjust Karein</p>
+                  <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-black border border-black/8 dark:border-white/10 rounded-lg px-3 py-2.5">
+                    <span className="text-base shrink-0">🔍</span>
+                    <input type="range" min={50} max={300} value={Math.round(getAdjust(selectedDesign.id).scale * 100)} onChange={(e) => handleZoom(Number(e.target.value))} className="flex-1 dp-slider text-black dark:text-white" style={sliderFill(Math.round(getAdjust(selectedDesign.id).scale * 100), 50, 300)} />
+                  </div>
+                  <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-black border border-black/8 dark:border-white/10 rounded-lg px-3 py-2.5">
+                    <span className="text-base shrink-0">⬆️⬇️</span>
+                    <input type="range" min={-Math.round(selectedDesign.ph * 0.7)} max={Math.round(selectedDesign.ph * 0.7)} value={Math.round(getAdjust(selectedDesign.id).oy || 0)} onChange={(e) => handleVerticalPos(Number(e.target.value))} className="flex-1 dp-slider text-black dark:text-white" style={sliderFill(Math.round(getAdjust(selectedDesign.id).oy || 0), -Math.round(selectedDesign.ph * 0.7), Math.round(selectedDesign.ph * 0.7))} />
+                  </div>
+                  <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-black border border-black/8 dark:border-white/10 rounded-lg px-3 py-2.5">
+                    <span className="text-base shrink-0">⬅️➡️</span>
+                    <input type="range" min={-Math.round(selectedDesign.pw * 0.7)} max={Math.round(selectedDesign.pw * 0.7)} value={Math.round(getAdjust(selectedDesign.id).ox || 0)} onChange={(e) => handleHorizontalPos(Number(e.target.value))} className="flex-1 dp-slider text-black dark:text-white" style={sliderFill(Math.round(getAdjust(selectedDesign.id).ox || 0), -Math.round(selectedDesign.pw * 0.7), Math.round(selectedDesign.pw * 0.7))} />
+                  </div>
+                  <p className="text-[9px] text-neutral-400 text-center pt-0.5">Sliders se photo set karein — screen ko chune se photo nahi hilegi</p>
+                </div>
+              )}
+
+              {name && selectedDesign.type !== "photo_only" && selectedDesign.nx !== undefined && (
+                <div className="max-w-[280px] md:max-w-none mx-auto space-y-2 bg-white dark:bg-neutral-900 rounded-xl p-3.5 border border-black/8 dark:border-white/10 shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-black dark:text-white">
+                    🔤 Naam Ka Style {!fontsLoaded && "(loading...)"}
+                  </p>
+                  <div className={`flex flex-wrap gap-1.5 transition-opacity ${fontsLoaded ? "opacity-100" : "opacity-50"}`}>
+                    {NAME_FONTS.map((f) => (
+                      <button
+                        key={f.id}
+                        onClick={() => setFontId(f.id)}
+                        style={{ fontFamily: f.css, fontWeight: f.weight as React.CSSProperties["fontWeight"] }}
+                        className={`px-3.5 py-2 text-xs rounded-lg border transition-all active:scale-95 ${fontId === f.id ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white" : "border-black/15 dark:border-white/15 text-black dark:text-white bg-neutral-50 dark:bg-black"}`}
+                      >
+                        {name.slice(0, 8) || f.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2.5 bg-neutral-50 dark:bg-black border border-black/8 dark:border-white/10 rounded-lg px-3 py-2.5">
+                    <span className="text-base shrink-0">↔️</span>
+                    <input
+                      type="range" min={50} max={180}
+                      value={Math.round((getAdjust(selectedDesign.id).fontScale || 1) * 100)}
+                      onChange={(e) => handleFontSize(Number(e.target.value))}
+                      className="flex-1 dp-slider text-black dark:text-white"
+                      style={sliderFill(Math.round((getAdjust(selectedDesign.id).fontScale || 1) * 100), 50, 180)}
+                    />
+                  </div>
+                  <p className="text-[9px] text-neutral-400 text-center pt-0.5">Slider se naam chota/bara karein</p>
+                </div>
+              )}
+
+              {uploadError && <p className="text-[10px] text-red-500 text-center">{uploadError}</p>}
+
+              {/* Desktop/tablet: buttons sit inline in the flow */}
+              <div className="hidden md:flex gap-2">
+                <button onClick={handleResetAdjust} className="flex-1 py-3.5 text-[11px] uppercase tracking-widest border border-black/20 dark:border-white/20 rounded-lg font-semibold text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                  Reset
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  disabled={uploading}
+                  className="flex-[2] py-3.5 text-[11px] uppercase tracking-widest font-bold bg-black text-white dark:bg-white dark:text-black rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-60 hover:opacity-90 transition-opacity"
+                >
+                  {uploading ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" /> Save ho raha hai {uploadProgress > 0 ? `${uploadProgress}%` : "..."}</>) : "✓ Confirm Design"}
+                </button>
               </div>
-              <div className="flex items-center gap-2 bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded px-3 py-2">
-                <span className="text-sm">🔤</span>
-                <input
-                  type="range" min={50} max={180}
-                  value={Math.round((getAdjust(selectedDesign.id).fontScale || 1) * 100)}
-                  onChange={(e) => handleFontSize(Number(e.target.value))}
-                  className="flex-1"
-                />
-              </div>
-              <p className="text-[9px] text-neutral-400 text-center">Slider se naam chota/bara karein</p>
+
+              {/* Mobile: buttons pinned to the bottom of the screen so they're
+                  always within thumb reach, no matter how far the customer
+                  has scrolled down the controls. */}
+              <div className="md:hidden h-[1px]" />
             </div>
-          )}
-
-          {uploadError && <p className="text-[10px] text-red-500 text-center">{uploadError}</p>}
-
-          <div className="flex gap-2 max-w-[280px] mx-auto">
-            <button onClick={handleResetAdjust} className="flex-1 py-2.5 text-[10px] uppercase tracking-widest border border-black/20 dark:border-white/20">
-              Reset
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={uploading}
-              className="flex-1 py-2.5 text-[10px] uppercase tracking-widest font-bold bg-black text-white dark:bg-white dark:text-black flex items-center justify-center gap-1.5 disabled:opacity-60"
-            >
-              {uploading ? (<><Loader2 className="w-3 h-3 animate-spin" /> Save ho raha hai {uploadProgress > 0 ? `${uploadProgress}%` : "..."}</>) : "✓ Confirm Design"}
-            </button>
           </div>
+        </div>
+      )}
+
+      {step === 3 && selectedDesign && (
+        <div
+          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur border-t border-black/10 dark:border-white/10 px-4 pt-3 flex gap-2"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+        >
+          <button onClick={handleResetAdjust} className="flex-1 py-3.5 text-[11px] uppercase tracking-widest border border-black/20 dark:border-white/20 rounded-lg font-semibold text-black dark:text-white">
+            Reset
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={uploading}
+            className="flex-[2] py-3.5 text-[11px] uppercase tracking-widest font-bold bg-black text-white dark:bg-white dark:text-black rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-60"
+          >
+            {uploading ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" /> Save ho raha hai {uploadProgress > 0 ? `${uploadProgress}%` : "..."}</>) : "✓ Confirm Design"}
+          </button>
         </div>
       )}
     </div>
